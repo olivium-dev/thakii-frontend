@@ -1,231 +1,179 @@
-# Thakii Frontend
+# Thakii Lecture2PDF Web Interface
 
-React-based web application for the Thakii Lecture2PDF Service. Provides a modern, responsive interface for video upload, processing status tracking, and administrative management.
+A modern React web application for converting lecture videos to PDF documents using the Thakii Lecture2PDF service.
 
-## 🚀 Features
+## Features
 
-- **Video Upload Interface**: Drag & drop video upload with progress tracking
-- **Real-time Status Updates**: Live processing status via Firebase Firestore
-- **User Authentication**: Firebase Auth integration with role-based access
-- **Admin Dashboard**: Server management and user administration
-- **Responsive Design**: Mobile-friendly interface with Tailwind CSS
-- **Error Handling**: Comprehensive error states and user feedback
-- **File Validation**: Size (2GB max) and type checking for videos
+- **Drag & Drop Upload**: Easy video file upload with drag and drop support
+- **Real-time Progress**: Upload progress tracking with visual indicators
+- **Video Management**: View all uploaded videos with status tracking
+- **PDF Download**: One-click PDF download when processing is complete
+- **Service Monitoring**: Real-time service health and status monitoring
+- **Responsive Design**: Mobile-friendly interface built with Tailwind CSS
 
-## 🛠️ Technology Stack
+## Technologies Used
 
 - **React 18**: Modern React with hooks and functional components
 - **Vite**: Fast build tool and development server
-- **Firebase SDK**: Authentication and real-time database
-- **Tailwind CSS**: Utility-first CSS framework
+- **Tailwind CSS**: Utility-first CSS framework for styling
 - **Axios**: HTTP client for API communication
-- **React Hot Toast**: User notifications and feedback
-- **Lucide React**: Modern icon library
+- **Lucide React**: Beautiful icons and illustrations
+- **React Hot Toast**: Elegant toast notifications
 
-## 📁 Project Structure
-
-```
-src/
-├── components/
-│   ├── Auth/                 # Authentication components
-│   │   ├── AuthPage.jsx      # Main auth interface
-│   │   ├── DevAuthPage.jsx   # Development auth bypass
-│   │   ├── LoginForm.jsx     # Login form component
-│   │   └── SignupForm.jsx    # Registration form
-│   ├── FileUpload.jsx        # Video upload interface
-│   ├── VideoList.jsx         # Processing status display
-│   ├── AdminDashboard.jsx    # Admin management interface
-│   ├── Header.jsx            # Navigation header
-│   └── ServiceStatus.jsx     # Backend health display
-├── contexts/
-│   └── AuthContext.jsx       # Global authentication state
-├── services/
-│   ├── api.js               # Backend API communication
-│   ├── firestore.js         # Real-time data synchronization
-│   └── notifications.js     # Push notification handling
-├── config/
-│   └── firebase.js          # Firebase configuration
-├── App.jsx                  # Main application component
-└── main.jsx                 # Application entry point
-```
-
-## 🔧 Environment Variables
-
-Create a `.env` file in the root directory:
-
-```env
-# Backend API
-VITE_API_BASE_URL=http://localhost:5001
-
-# Firebase Configuration
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-```
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- npm or yarn
-- Firebase project with Authentication and Firestore enabled
+
+- Node.js 16 or higher
+- npm or yarn package manager
+- Thakii Lecture2PDF backend service running on `http://localhost:5001`
 
 ### Installation
 
-1. **Clone the repository**:
+1. Navigate to the web interface directory:
    ```bash
-   git clone https://github.com/oudaykhaled/thakii-frontend.git
-   cd thakii-frontend
+   cd web-interface
    ```
 
-2. **Install dependencies**:
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-3. **Configure environment**:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-4. **Start development server**:
+3. Start the development server:
    ```bash
    npm run dev
    ```
 
-5. **Access the application**:
-   Open http://localhost:3000 in your browser
+4. Open your browser and navigate to `http://localhost:3000`
 
-### Build for Production
+### Production Build
+
+To create a production build:
 
 ```bash
 npm run build
-npm run preview  # Preview production build locally
 ```
 
-## 📡 API Integration
+The build files will be generated in the `dist` directory.
 
-The frontend communicates with the backend API through the following endpoints:
+### Preview Production Build
 
-- `GET /health` - Backend health check
-- `POST /upload` - Video file upload
-- `GET /list` - User's video list
-- `GET /download/{video_id}` - PDF download URLs
-- `GET /admin/*` - Admin management endpoints
-
-## 🔥 Firebase Integration
-
-### Authentication
-- Email/password authentication
-- JWT token management
-- Role-based access control (user/admin)
-
-### Firestore Real-time Updates
-- Video processing status updates
-- System notifications
-- Admin dashboard data
-
-## 🎨 UI Components
-
-### File Upload
-- Drag & drop interface
-- Upload progress tracking
-- File type and size validation
-- Error handling and feedback
-
-### Video List
-- Real-time status updates
-- Processing progress indicators
-- Download buttons for completed videos
-- Filtering and sorting options
-
-### Admin Dashboard
-- Server health monitoring
-- User management interface
-- System statistics and metrics
-- Admin user creation and management
-
-## 🔒 Security Features
-
-- Firebase Authentication integration
-- JWT token validation
-- CORS configuration
-- Input validation and sanitization
-- Role-based route protection
-
-## 📱 Responsive Design
-
-- Mobile-first approach
-- Tailwind CSS utility classes
-- Responsive grid layouts
-- Touch-friendly interfaces
-- Optimized for various screen sizes
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-1. Connect your GitHub repository to Vercel
-2. Configure environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
-
-### Netlify
-1. Connect repository to Netlify
-2. Set build command: `npm run build`
-3. Set publish directory: `dist`
-4. Configure environment variables
-
-### AWS S3 + CloudFront
-1. Build the application: `npm run build`
-2. Upload `dist/` contents to S3 bucket
-3. Configure CloudFront distribution
-4. Set up custom domain (optional)
-
-## 🧪 Testing
+To preview the production build locally:
 
 ```bash
-# Run unit tests
-npm run test
-
-# Run e2e tests
-npm run test:e2e
-
-# Generate coverage report
-npm run test:coverage
+npm run preview
 ```
 
-## 📈 Performance Optimization
+## Configuration
 
-- Code splitting with Vite
-- Lazy loading of components
-- Image optimization
-- Bundle size monitoring
-- Caching strategies
+### Environment Variables
 
-## 🤝 Contributing
+Create a `.env.local` file in the root directory to configure the backend URL:
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/new-feature`
-3. Commit changes: `git commit -am 'Add new feature'`
-4. Push to branch: `git push origin feature/new-feature`
-5. Submit a pull request
+```env
+VITE_API_BASE_URL=http://localhost:5001
+VITE_API_TIMEOUT=300000
+```
 
-## 📄 License
+### Backend Connection
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+The web interface connects directly to the backend service (not Lambda) at:
+- Development: `http://localhost:5001`
+- Production: Configure via environment variables
 
-## 🆘 Support
+## File Structure
 
-For support and questions:
-- Create an issue on GitHub
-- Contact the development team
-- Check the documentation wiki
+```
+web-interface/
+├── src/
+│   ├── components/         # React components
+│   │   ├── Header.jsx     # App header with branding
+│   │   ├── FileUpload.jsx # File upload component
+│   │   ├── VideoList.jsx  # Video list and management
+│   │   └── ServiceStatus.jsx # Service health status
+│   ├── services/          # API services
+│   │   └── api.js         # Backend API communication
+│   ├── App.jsx            # Main application component
+│   ├── main.jsx           # Application entry point
+│   └── index.css          # Global styles and Tailwind
+├── public/                # Static assets
+├── package.json           # Dependencies and scripts
+├── tailwind.config.js     # Tailwind CSS configuration
+├── vite.config.js         # Vite configuration
+└── README.md              # This file
+```
 
-## 🔗 Related Repositories
+## API Integration
 
-- [thakii-backend-api](https://github.com/oudaykhaled/thakii-backend-api) - Backend REST API
-- [thakii-lambda-router](https://github.com/oudaykhaled/thakii-lambda-router) - Load balancer
-- [thakii-infrastructure](https://github.com/oudaykhaled/thakii-infrastructure) - Infrastructure as Code
+The web interface communicates with the backend service through the following endpoints:
+
+- `GET /health` - Service health check
+- `POST /upload` - Upload video files
+- `GET /list` - Get list of all videos
+- `GET /status/:id` - Get video processing status
+- `GET /download/:id` - Download generated PDF
+
+## Features in Detail
+
+### File Upload
+- Supports multiple video formats (MP4, AVI, MOV, WMV, MKV)
+- Maximum file size: 2GB
+- Real-time upload progress
+- Drag and drop interface
+
+### Video Processing Queue
+- Real-time status updates
+- Processing stages: in_queue → in_progress → done/failed
+- Automatic refresh every 10 seconds
+
+### Service Monitoring
+- Backend service health status
+- Database connection status
+- Storage system status
+- Last check timestamp
+
+### Responsive Design
+- Mobile-first approach
+- Tablet and desktop optimized
+- Touch-friendly interactions
+- Accessible design patterns
+
+## Development
+
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Create production build
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint for code quality
+
+### Code Style
+
+The project uses:
+- ESLint for code linting
+- Prettier for code formatting
+- Tailwind CSS for consistent styling
+- React best practices and hooks
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Backend Connection Failed**
+   - Ensure the backend service is running on `http://localhost:5001`
+   - Check if the service is healthy via `/health` endpoint
+
+2. **Upload Fails**
+   - Verify file format is supported
+   - Check file size (max 2GB)
+   - Ensure backend has sufficient storage space
+
+3. **PDF Download Issues**
+   - Wait for processing to complete (status: "done")
+   - Check browser popup blocker settings
+   - Verify backend PDF generation is working
+
+### Support
+
+For technical support or feature requests, please refer to the main project documentation.
