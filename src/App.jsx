@@ -20,6 +20,12 @@ function AppContent() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isLoadingVideos, setIsLoadingVideos] = useState(true);
   const [activeTab, setActiveTab] = useState('videos');
+  
+  // Auto-refresh state
+  const [autoRefreshActive, setAutoRefreshActive] = useState(false);
+  const [showRefreshModal, setShowRefreshModal] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState(null);
+  const [refreshTimeout, setRefreshTimeout] = useState(null);
 
   // Fetch health status directly from API (authoritative)
   const fetchHealthStatus = async () => {
@@ -150,10 +156,66 @@ function AppContent() {
     }
   };
 
-  // Handle refresh
+  // Start auto-refresh system
+  const startAutoRefresh = () => {
+    console.log('🔄 Starting auto-refresh every 5 seconds...');
+    setAutoRefreshActive(true);
+    
+    // Set up 5-second interval
+    const interval = setInterval(() => {
+      console.log('🔄 Auto-refreshing video list...');
+      fetchVideos();
+    }, 5000);
+    setRefreshInterval(interval);
+    
+    // Set up 2-minute timeout for modal
+    const timeout = setTimeout(() => {
+      console.log('⏰ 2 minutes elapsed, showing refresh modal...');
+      setShowRefreshModal(true);
+      stopAutoRefresh();
+    }, 120000); // 2 minutes
+    setRefreshTimeout(timeout);
+  };
+  
+  // Stop auto-refresh system
+  const stopAutoRefresh = () => {
+    console.log('⏹️ Stopping auto-refresh...');
+    setAutoRefreshActive(false);
+    
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+      setRefreshInterval(null);
+    }
+    
+    if (refreshTimeout) {
+      clearTimeout(refreshTimeout);
+      setRefreshTimeout(null);
+    }
+  };
+  
+  // Handle manual refresh
   const handleRefresh = () => {
     fetchVideos();
     fetchHealthStatus();
+    
+    // Start auto-refresh if not already active
+    if (!autoRefreshActive) {
+      startAutoRefresh();
+    }
+  };
+  
+  // Handle modal continue
+  const handleModalContinue = () => {
+    console.log('✅ User chose to continue auto-refresh');
+    setShowRefreshModal(false);
+    startAutoRefresh(); // Restart auto-refresh
+  };
+  
+  // Handle modal dismiss
+  const handleModalDismiss = () => {
+    console.log('❌ User dismissed auto-refresh modal');
+    setShowRefreshModal(false);
+    // Don't restart auto-refresh until manual refresh
   };
 
   // Initial data fetch and real-time updates setup - DISABLED for manual refresh only
@@ -163,6 +225,9 @@ function AppContent() {
       // Initial fetch for immediate data
       fetchHealthStatus();
       fetchVideos();
+      
+      // Start auto-refresh after initial load
+      startAutoRefresh();
       
       // Set up real-time listeners
       let unsubscribeVideos;
@@ -221,13 +286,11 @@ function AppContent() {
         // };
       }
       
-      // Clean up listeners when component unmounts or user changes - DISABLED since no listeners are active
-      // return () => {
-      //   console.log('Cleaning up real-time listeners');
-      //   if (unsubscribeVideos) unsubscribeVideos();
-      //   if (unsubscribeHealth) unsubscribeHealth();
-      //   if (unsubscribeNotifications) unsubscribeNotifications();
-      // };
+      // Clean up auto-refresh when component unmounts or user changes
+      return () => {
+        console.log('🧹 Cleaning up auto-refresh on unmount');
+        stopAutoRefresh();
+      };
     }
   }, [currentUser, isAdmin]);
 
@@ -238,6 +301,46 @@ function AppContent() {
   //   }, 15000);
   //   return () => clearInterval(intervalId);
   // }, []);
+
+  // Auto-refresh modal component
+  const RefreshModal = () => (
+    showRefreshModal && (
+      <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="mt-3 text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+              <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+            <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">
+              Continue Auto-Refresh?
+            </h3>
+            <div className="mt-2 px-7 py-3">
+              <p className="text-sm text-gray-500">
+                The video list has been auto-refreshing for 2 minutes. Would you like to continue 
+                automatic updates or switch to manual refresh?
+              </p>
+            </div>
+            <div className="items-center px-4 py-3">
+              <button
+                onClick={handleModalContinue}
+                className="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 mb-3"
+              >
+                Continue Auto-Refresh
+              </button>
+              <button
+                onClick={handleModalDismiss}
+                className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+              >
+                Switch to Manual
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  );
 
   // Show auth page if user is not logged in
   if (!currentUser) {
@@ -267,11 +370,13 @@ function AppContent() {
             />
 
             {/* Video List */}
-            <VideoList 
+            <VideoList
               videos={videos}
               onDownload={handleDownload}
               onRefresh={handleRefresh}
               isLoading={isLoadingVideos}
+              autoRefreshActive={autoRefreshActive}
+              onStopAutoRefresh={stopAutoRefresh}
             />
           </div>
         ) : activeTab === 'admin' && isAdmin ? (
@@ -287,6 +392,9 @@ function AppContent() {
           </div>
         )}
       </main>
+
+      {/* Auto-refresh modal */}
+      <RefreshModal />
 
       {/* Toast Notifications */}
       <Toaster

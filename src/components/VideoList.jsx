@@ -1,7 +1,7 @@
 import React from 'react';
 import { FiDownload, FiRefreshCw, FiClock, FiCheck, FiAlertTriangle, FiLoader } from 'react-icons/fi';
 
-function VideoList({ videos, onDownload, onRefresh, isLoading, error }) {
+function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefreshActive, onStopAutoRefresh }) {
   // Sort videos by upload date (newest first)
   const sortedVideos = [...videos].sort((a, b) => {
     return new Date(b.upload_date || 0) - new Date(a.upload_date || 0);
@@ -99,13 +99,27 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error }) {
     <div className="bg-white shadow rounded-lg p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-800">My Videos</h2>
-        <button
-          onClick={onRefresh}
-          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          <FiRefreshCw className="mr-2" />
-          Refresh
-        </button>
+        <div className="flex items-center space-x-3">
+          {autoRefreshActive && (
+            <div className="flex items-center text-green-600 text-sm">
+              <FiRefreshCw className="animate-spin mr-1" />
+              Auto-refreshing every 5s
+              <button
+                onClick={onStopAutoRefresh}
+                className="ml-2 text-xs text-gray-500 hover:text-gray-700 underline"
+              >
+                Stop
+              </button>
+            </div>
+          )}
+          <button
+            onClick={onRefresh}
+            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <FiRefreshCw className="mr-2" />
+            {autoRefreshActive ? 'Refresh Now' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
