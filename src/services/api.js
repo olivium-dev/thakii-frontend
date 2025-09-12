@@ -1,46 +1,61 @@
 import axios from 'axios';
-import { auth } from '../config/firebase';
 
 // Configure the base URL via env; fallback to local backend for development
-// Set VITE_API_BASE_URL in your web .env to point to API Gateway in production
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://thakii-02.fanusdigital.site/thakii-be';
 
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: 300000, // 5 minutes timeout for large file uploads
 });
 
-// Add authentication token to requests
-const getAuthToken = async () => {
-  try {
-    if (!auth) {
-      console.warn('Firebase auth not initialized');
-      return null;
-    }
-    
-    const user = auth.currentUser;
-    if (user) {
-      console.log('Getting auth token for user:', user.email);
-      return await user.getIdToken();
-    } else {
-      console.log('No authenticated user found');
-      return null;
-    }
-  } catch (error) {
-    console.error('Error getting auth token:', error);
-    return null;
+// Store authentication token (managed by backend)
+let authToken = null;
+
+// Get authentication token from localStorage or backend
+const getAuthToken = () => {
+  // First check localStorage for stored token
+  const storedToken = localStorage.getItem('thakii_auth_token');
+  if (storedToken) {
+    console.log('Using stored auth token');
+    return storedToken;
   }
+  
+  // Return current token if available
+  if (authToken) {
+    console.log('Using current auth token');
+    return authToken;
+  }
+  
+  console.log('No auth token available');
+  return null;
+};
+
+// Set authentication token (called after login)
+const setAuthToken = (token) => {
+  authToken = token;
+  localStorage.setItem('thakii_auth_token', token);
+  console.log('Auth token stored');
+};
+
+// Clear authentication token (called on logout)
+const clearAuthToken = () => {
+  authToken = null;
+  localStorage.removeItem('thakii_auth_token');
+  console.log('Auth token cleared');
 };
 
 // Add request interceptor to add auth token and log requests
 api.interceptors.request.use(
-  async (config) => {
+  (config) => {
     console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
     
     // Add authentication token to headers
-    const token = await getAuthToken();
+    const token = getAuthToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('🔑 Auth token attached to request');
+    } else {
+      console.log('⚠️  No auth token available');
     }
     
     return config;
@@ -64,7 +79,33 @@ api.interceptors.response.use(
 );
 
 export const apiService = {
-  // Health check - LOCAL BACKEND ONLY
+  // Authentication methods
+  async loginWithEmail(email, uid) {
+    const response = await api.post('/auth/mock-user-token', { email, uid });
+    if (response.data.custom_token) {
+      setAuthToken(response.data.custom_token);
+    }
+    return response.data;
+  },
+
+  async loginAsAdmin(email, uid) {
+    const response = await api.post('/auth/mock-admin-token', { email, uid });
+    if (response.data.custom_token) {
+      setAuthToken(response.data.custom_token);
+    }
+    return response.data;
+  },
+
+  async getCurrentUser() {
+    const response = await api.get('/auth/user');
+    return response.data;
+  },
+
+  logout() {
+    clearAuthToken();
+  },
+
+  // Health check
   async checkHealth() {
     const response = await api.get('/health');
     return response.data;
@@ -204,5 +245,8 @@ export const apiService = {
     return response.data;
   },
 };
+
+// Export token management functions
+export { setAuthToken, clearAuthToken, getAuthToken };
 
 export default api;
