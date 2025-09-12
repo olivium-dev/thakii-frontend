@@ -243,6 +243,7 @@ function AppContent() {
       // Start auto-refresh after initial load
       console.log('🚀 Triggering auto-refresh after initial load...');
       setTimeout(() => {
+        console.log('⏰ 2-second delay completed, starting auto-refresh...');
         startAutoRefresh();
       }, 2000); // Wait 2 seconds after initial load
       
@@ -309,7 +310,7 @@ function AppContent() {
         stopAutoRefresh();
       };
     }
-  }, [currentUser, isAdmin]);
+  }, [currentUser]);
 
   // Periodic verification to keep the status accurate even if Firestore doc is stale - DISABLED for manual refresh only
   // useEffect(() => {
