@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { auth } from '../config/firebase';
 
 // Configure the base URL via env; fallback to local backend for development
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://thakii-02.fanusdigital.site/thakii-be';
@@ -8,54 +9,73 @@ const api = axios.create({
   timeout: 300000, // 5 minutes timeout for large file uploads
 });
 
-// Store authentication token (managed by backend)
-let authToken = null;
+// Store backend custom token (exchanged from Firebase token)
+let backendToken = null;
 
-// Get authentication token from localStorage or backend
-const getAuthToken = () => {
-  // First check localStorage for stored token
-  const storedToken = localStorage.getItem('thakii_auth_token');
-  if (storedToken) {
-    console.log('Using stored auth token');
-    return storedToken;
+// Get Firebase token and exchange for backend token
+const getBackendToken = async () => {
+  try {
+    // First check localStorage for stored backend token
+    const storedToken = localStorage.getItem('thakii_backend_token');
+    if (storedToken) {
+      console.log('🔑 Using stored backend token');
+      return storedToken;
+    }
+    
+    // Get Firebase token from current user
+    if (!auth || !auth.currentUser) {
+      console.log('⚠️  No Firebase user authenticated');
+      return null;
+    }
+    
+    const firebaseToken = await auth.currentUser.getIdToken();
+    console.log('🔥 Got Firebase token, exchanging for backend token...');
+    
+    // Exchange Firebase token for backend custom token
+    const response = await axios.post(
+      `${BASE_URL}/auth/exchange-token`,
+      {},
+      {
+        headers: { 'Authorization': `Bearer ${firebaseToken}` },
+        timeout: 10000
+      }
+    );
+    
+    if (response.data.custom_token) {
+      backendToken = response.data.custom_token;
+      localStorage.setItem('thakii_backend_token', backendToken);
+      console.log('✅ Backend token obtained and stored');
+      return backendToken;
+    } else {
+      console.error('❌ No backend token in exchange response');
+      return null;
+    }
+    
+  } catch (error) {
+    console.error('❌ Token exchange failed:', error);
+    return null;
   }
-  
-  // Return current token if available
-  if (authToken) {
-    console.log('Using current auth token');
-    return authToken;
-  }
-  
-  console.log('No auth token available');
-  return null;
 };
 
-// Set authentication token (called after login)
-const setAuthToken = (token) => {
-  authToken = token;
-  localStorage.setItem('thakii_auth_token', token);
-  console.log('Auth token stored');
-};
-
-// Clear authentication token (called on logout)
-const clearAuthToken = () => {
-  authToken = null;
-  localStorage.removeItem('thakii_auth_token');
-  console.log('Auth token cleared');
+// Clear backend token (called on logout)
+const clearBackendToken = () => {
+  backendToken = null;
+  localStorage.removeItem('thakii_backend_token');
+  console.log('🗑️ Backend token cleared');
 };
 
 // Add request interceptor to add auth token and log requests
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
     
-    // Add authentication token to headers
-    const token = getAuthToken();
+    // Get backend token (exchanged from Firebase token)
+    const token = await getBackendToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('🔑 Auth token attached to request');
+      console.log('🔑 Backend token attached to request');
     } else {
-      console.log('⚠️  No auth token available');
+      console.log('⚠️  No backend token available');
     }
     
     return config;
@@ -79,31 +99,6 @@ api.interceptors.response.use(
 );
 
 export const apiService = {
-  // Authentication methods
-  async loginWithEmail(email, uid) {
-    const response = await api.post('/auth/mock-user-token', { email, uid });
-    if (response.data.custom_token) {
-      setAuthToken(response.data.custom_token);
-    }
-    return response.data;
-  },
-
-  async loginAsAdmin(email, uid) {
-    const response = await api.post('/auth/mock-admin-token', { email, uid });
-    if (response.data.custom_token) {
-      setAuthToken(response.data.custom_token);
-    }
-    return response.data;
-  },
-
-  async getCurrentUser() {
-    const response = await api.get('/auth/user');
-    return response.data;
-  },
-
-  logout() {
-    clearAuthToken();
-  },
 
   // Health check
   async checkHealth() {
@@ -247,6 +242,6 @@ export const apiService = {
 };
 
 // Export token management functions
-export { setAuthToken, clearAuthToken, getAuthToken };
+export { clearBackendToken };
 
 export default api;

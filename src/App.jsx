@@ -7,12 +7,9 @@ import Header from './components/Header';
 import FileUpload from './components/FileUpload';
 import VideoList from './components/VideoList';
 import ServiceStatus from './components/ServiceStatus';
-import AuthPage from './components/Auth/AuthPage';
-import DevAuthPage from './components/Auth/DevAuthPage';
+import FirebaseLogin from './components/Auth/FirebaseLogin';
 import AdminDashboard from './components/AdminDashboard';
 import { apiService } from './services/api';
-import { firestoreService } from './services/firestore';
-import { notificationService } from './services/notifications';
 
 function AppContent() {
   const { currentUser, isAdmin } = useAuth();
@@ -180,15 +177,7 @@ function AppContent() {
 
   // Show auth page if user is not logged in
   if (!currentUser) {
-    // Check if Firebase is properly configured
-    const hasFirebaseConfig = import.meta.env.VITE_FIREBASE_API_KEY && 
-                              import.meta.env.VITE_FIREBASE_API_KEY !== 'your_api_key_here';
-    
-    if (!hasFirebaseConfig) {
-      return <DevAuthPage />;
-    }
-    
-    return <AuthPage />;
+    return <FirebaseLogin />;
   }
 
   return (

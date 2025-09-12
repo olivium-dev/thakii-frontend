@@ -50,3 +50,5 @@ coverage/
 
 # Docker
 .dockerignore
+firebase-service-account.json
+firebase-service-account.json
