@@ -1,11 +1,55 @@
 import React from 'react';
 import { FiDownload, FiRefreshCw, FiClock, FiCheck, FiAlertTriangle, FiLoader } from 'react-icons/fi';
 
-function VideoList({ videos, onDownload, onRefresh, isLoading }) {
+function VideoList({ videos, onDownload, onRefresh, isLoading, error }) {
   // Sort videos by upload date (newest first)
   const sortedVideos = [...videos].sort((a, b) => {
     return new Date(b.upload_date || 0) - new Date(a.upload_date || 0);
   });
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="bg-white shadow rounded-lg p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-gray-800">My Videos</h2>
+          <button disabled className="px-4 py-2 bg-gray-300 text-gray-500 rounded-md cursor-not-allowed">
+            <FiRefreshCw className="mr-2 animate-spin" />
+            Loading...
+          </button>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <FiLoader className="animate-spin h-8 w-8 text-blue-500 mr-3" />
+          <span className="text-gray-600">Loading your videos...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="bg-white shadow rounded-lg p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-gray-800">My Videos</h2>
+          <button
+            onClick={onRefresh}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+          >
+            <FiRefreshCw className="mr-2" />
+            Retry
+          </button>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <FiAlertTriangle className="h-8 w-8 text-red-500 mr-3" />
+          <div className="text-center">
+            <p className="text-red-600 font-medium">Failed to load videos</p>
+            <p className="text-gray-500 text-sm mt-1">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Get status icon and color
   const getStatusInfo = (status) => {
