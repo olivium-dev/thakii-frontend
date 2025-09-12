@@ -12,48 +12,61 @@ const api = axios.create({
 // Store backend custom token (exchanged from Firebase token)
 let backendToken = null;
 
-// Get Firebase token and exchange for backend token
+// Get backend token (prioritize AuthContext token over localStorage)
 const getBackendToken = async () => {
   console.log('🔑 === GET BACKEND TOKEN STARTED ===');
   
   try {
-    // First check localStorage for stored backend token
-    const storedToken = localStorage.getItem('thakii_backend_token');
-    if (storedToken) {
-      console.log('✅ Using stored backend token');
-      console.log('   Token length:', storedToken.length);
-      console.log('   Token preview:', storedToken.substring(0, 50) + '...');
+    // PRIORITY 1: Check if AuthContext has set a backend token
+    const authContextToken = localStorage.getItem('thakii_backend_token');
+    if (authContextToken) {
+      console.log('🎯 Using AuthContext backend token (from Firebase login)');
       
-      // Validate token is not expired (basic check)
+      // Validate token payload to see user info
       try {
-        const payload = JSON.parse(atob(storedToken.split('.')[1]));
+        const payload = JSON.parse(atob(authContextToken.split('.')[1]));
+        console.log('✅ TOKEN VALIDATION:');
+        console.log('   User ID:', payload.user_id);
+        console.log('   Email:', payload.email);
+        console.log('   Is Admin:', payload.is_admin);
+        console.log('   Expires:', new Date(payload.exp * 1000).toISOString());
+        
         const now = Math.floor(Date.now() / 1000);
         if (payload.exp && payload.exp > now) {
-          console.log('✅ Stored token is valid (not expired)');
-          return storedToken;
+          console.log('✅ Token is valid and not expired');
+          return authContextToken;
         } else {
-          console.log('⚠️  Stored token expired, removing...');
+          console.log('⚠️  Token expired, will get fresh one...');
           localStorage.removeItem('thakii_backend_token');
         }
       } catch (e) {
-        console.log('⚠️  Could not validate stored token, using anyway');
-        return storedToken;
+        console.log('⚠️  Could not decode token, using anyway');
+        return authContextToken;
       }
     }
     
-    // Get Firebase token from current user
+    // PRIORITY 2: Get fresh token via Firebase
     if (!auth || !auth.currentUser) {
-      console.log('❌ No Firebase user authenticated');
-      console.log('   Auth object:', !!auth);
-      console.log('   Current user:', !!auth?.currentUser);
+      console.log('❌ No Firebase user authenticated for fresh token');
       return null;
     }
     
-    console.log('🔥 Getting fresh Firebase token...');
+    console.log('🔥 Getting fresh Firebase token for backend exchange...');
     const firebaseToken = await auth.currentUser.getIdToken();
     console.log('   Firebase token length:', firebaseToken.length);
     
-    console.log('🔄 Exchanging Firebase token for backend token...');
+    // Decode Firebase token to see user info
+    try {
+      const firebasePayload = JSON.parse(atob(firebaseToken.split('.')[1]));
+      console.log('🔥 FIREBASE TOKEN INFO:');
+      console.log('   User ID:', firebasePayload.user_id || firebasePayload.sub);
+      console.log('   Email:', firebasePayload.email);
+      console.log('   Issuer:', firebasePayload.iss);
+    } catch (e) {
+      console.log('⚠️  Could not decode Firebase token');
+    }
+    
+    console.log('🔄 Exchanging Firebase token for backend token via /auth/login...');
     
     // Exchange Firebase token for backend token using login endpoint
     const response = await axios.post(
@@ -65,30 +78,37 @@ const getBackendToken = async () => {
       }
     );
     
-    console.log('📊 LOGIN RESPONSE:');
+    console.log('📊 BACKEND LOGIN RESPONSE:');
     console.log('   Status:', response.status);
-    console.log('   Data:', response.data);
+    console.log('   Success:', response.data?.success);
     
-    if (response.data.success && response.data.backend_token) {
-      backendToken = response.data.backend_token;
-      localStorage.setItem('thakii_backend_token', backendToken);
-      console.log('✅ New backend token obtained and stored');
-      console.log('   Token length:', backendToken.length);
-      return backendToken;
+    if (response.data?.success && response.data?.backend_token) {
+      const newBackendToken = response.data.backend_token;
+      localStorage.setItem('thakii_backend_token', newBackendToken);
+      
+      // Decode new backend token to verify user info
+      try {
+        const backendPayload = JSON.parse(atob(newBackendToken.split('.')[1]));
+        console.log('✅ NEW BACKEND TOKEN INFO:');
+        console.log('   User ID:', backendPayload.user_id);
+        console.log('   Email:', backendPayload.email);
+        console.log('   Is Admin:', backendPayload.is_admin);
+        console.log('🎯 This UID should match video ownership!');
+      } catch (e) {
+        console.log('⚠️  Could not decode new backend token');
+      }
+      
+      return newBackendToken;
     } else {
-      console.error('❌ No backend token in login response');
-      console.log('   Response data:', response.data);
+      console.error('❌ Backend login failed');
+      console.log('   Response:', response.data);
       return null;
     }
     
   } catch (error) {
     console.error('❌ GET BACKEND TOKEN ERROR:', error);
-    console.error('   Error type:', typeof error);
-    console.error('   Error message:', error.message);
-    console.error('   Response status:', error.response?.status);
-    console.error('   Response data:', error.response?.data);
     
-    // Try to use stored token as fallback
+    // FALLBACK: Try any stored token
     const fallbackToken = localStorage.getItem('thakii_backend_token');
     if (fallbackToken) {
       console.log('🔄 Using fallback stored token');
@@ -229,14 +249,34 @@ export const apiService = {
 
   // Download PDF by video ID - LOCAL BACKEND ONLY
   async downloadPdf(videoId) {
+    console.log('📥 === DOWNLOAD PDF STARTED ===');
+    console.log('   Video ID:', videoId);
+    
     try {
-      console.log('Downloading PDF for video ID:', videoId);
+      // First, let's check what token we're using
+      const currentToken = await getBackendToken();
+      if (currentToken) {
+        try {
+          const payload = JSON.parse(atob(currentToken.split('.')[1]));
+          console.log('🔑 DOWNLOAD TOKEN INFO:');
+          console.log('   User ID:', payload.user_id);
+          console.log('   Email:', payload.email);
+          console.log('   Is Admin:', payload.is_admin);
+        } catch (e) {
+          console.log('⚠️  Could not decode download token');
+        }
+      }
+      
+      console.log('📡 Making download request...');
       const response = await api.get(`/download/${videoId}`);
-      console.log('Download response:', response.data);
+      
+      console.log('📊 DOWNLOAD RESPONSE:');
+      console.log('   Status:', response.status);
+      console.log('   Data:', response.data);
       
       // The response should contain a presigned URL
       if (response.data && response.data.download_url) {
-        console.log('Using presigned URL:', response.data.download_url);
+        console.log('✅ Download URL received:', response.data.download_url);
         
         // Trigger download using the presigned URL
         const link = document.createElement('a');
@@ -246,12 +286,24 @@ export const apiService = {
         link.click();
         document.body.removeChild(link);
         
+        console.log('✅ Download triggered successfully');
         return response.data.download_url;
       } else {
+        console.error('❌ No download URL in response');
         throw new Error('No download URL received from server');
       }
     } catch (error) {
-      console.error('Download failed:', error);
+      console.error('❌ DOWNLOAD ERROR:');
+      console.error('   Error type:', typeof error);
+      console.error('   Error message:', error.message);
+      console.error('   Response status:', error.response?.status);
+      console.error('   Response data:', error.response?.data);
+      
+      if (error.response?.status === 403) {
+        console.error('🚨 ACCESS DENIED - User ID mismatch detected');
+        console.error('   This means the backend token has wrong user ID');
+      }
+      
       throw error;
     }
   },

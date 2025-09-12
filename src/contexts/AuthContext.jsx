@@ -65,6 +65,19 @@ export function AuthProvider({ children }) {
           console.log('✅ 30-day backend token obtained and stored');
           console.log('   Backend token length:', data.backend_token.length);
           console.log(`✅ User: ${data.user.email} (Admin: ${data.user.is_admin})`);
+          
+          // Decode and verify the backend token contains correct user info
+          try {
+            const payload = JSON.parse(atob(data.backend_token.split('.')[1]));
+            console.log('🔍 BACKEND TOKEN VERIFICATION:');
+            console.log('   Token User ID:', payload.user_id);
+            console.log('   Token Email:', payload.email);
+            console.log('   Token Admin:', payload.is_admin);
+            console.log('🎯 This should match your video ownership!');
+          } catch (e) {
+            console.log('⚠️  Could not decode backend token for verification');
+          }
+          
           console.log('🎯 TOKEN EXCHANGE SUCCESSFUL');
           return data.backend_token;
         } else {
