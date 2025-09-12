@@ -36,8 +36,8 @@ export function AuthProvider({ children }) {
       
       const firebaseToken = await firebaseUser.getIdToken();
       
-      // Call backend token exchange
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://thakii-02.fanusdigital.site/thakii-be'}/auth/exchange-token`, {
+      // Call backend login endpoint (bypasses broken Firebase verification)
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://thakii-02.fanusdigital.site/thakii-be'}/auth/login`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${firebaseToken}`,
@@ -47,10 +47,16 @@ export function AuthProvider({ children }) {
       
       if (response.ok) {
         const data = await response.json();
-        setBackendToken(data.custom_token);
-        localStorage.setItem('thakii_backend_token', data.custom_token);
-        console.log('✅ Backend token obtained and stored');
-        return data.custom_token;
+        if (data.success && data.backend_token) {
+          setBackendToken(data.backend_token);
+          localStorage.setItem('thakii_backend_token', data.backend_token);
+          console.log('✅ 30-day backend token obtained and stored');
+          console.log(`✅ User: ${data.user.email} (Admin: ${data.user.is_admin})`);
+          return data.backend_token;
+        } else {
+          console.error('❌ No backend token in response:', data);
+          return null;
+        }
       } else {
         console.error('❌ Token exchange failed:', response.status);
         toast.error('Authentication failed - please try again');
