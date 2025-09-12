@@ -181,9 +181,10 @@ function AppContent() {
     console.log('⏰ Setting up 2-minute timeout for modal...');
     const timeout = setTimeout(() => {
       console.log('⏰ === 2 MINUTES ELAPSED ===');
-      console.log('   Showing refresh modal...');
-      setShowRefreshModal(true);
+      console.log('   Stopping auto-refresh BEFORE showing modal...');
       stopAutoRefresh();
+      console.log('   Now showing refresh modal...');
+      setShowRefreshModal(true);
     }, 120000); // 2 minutes
     setRefreshTimeout(timeout);
     console.log('✅ Timeout set with ID:', timeout);
@@ -193,18 +194,28 @@ function AppContent() {
   
   // Stop auto-refresh system
   const stopAutoRefresh = () => {
-    console.log('⏹️ Stopping auto-refresh...');
+    console.log('⏹️ === STOPPING AUTO-REFRESH SYSTEM ===');
+    console.log('   Current interval ID:', refreshInterval);
+    console.log('   Current timeout ID:', refreshTimeout);
+    
     setAutoRefreshActive(false);
+    console.log('✅ Auto-refresh active set to false');
     
     if (refreshInterval) {
+      console.log('🛑 Clearing interval:', refreshInterval);
       clearInterval(refreshInterval);
       setRefreshInterval(null);
+      console.log('✅ Interval cleared and nullified');
     }
     
     if (refreshTimeout) {
+      console.log('🛑 Clearing timeout:', refreshTimeout);
       clearTimeout(refreshTimeout);
       setRefreshTimeout(null);
+      console.log('✅ Timeout cleared and nullified');
     }
+    
+    console.log('🎯 Auto-refresh system completely stopped');
   };
   
   // Handle manual refresh
