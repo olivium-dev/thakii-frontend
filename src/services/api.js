@@ -14,45 +14,87 @@ let backendToken = null;
 
 // Get Firebase token and exchange for backend token
 const getBackendToken = async () => {
+  console.log('🔑 === GET BACKEND TOKEN STARTED ===');
+  
   try {
     // First check localStorage for stored backend token
     const storedToken = localStorage.getItem('thakii_backend_token');
     if (storedToken) {
-      console.log('🔑 Using stored backend token');
-      return storedToken;
+      console.log('✅ Using stored backend token');
+      console.log('   Token length:', storedToken.length);
+      console.log('   Token preview:', storedToken.substring(0, 50) + '...');
+      
+      // Validate token is not expired (basic check)
+      try {
+        const payload = JSON.parse(atob(storedToken.split('.')[1]));
+        const now = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp > now) {
+          console.log('✅ Stored token is valid (not expired)');
+          return storedToken;
+        } else {
+          console.log('⚠️  Stored token expired, removing...');
+          localStorage.removeItem('thakii_backend_token');
+        }
+      } catch (e) {
+        console.log('⚠️  Could not validate stored token, using anyway');
+        return storedToken;
+      }
     }
     
     // Get Firebase token from current user
     if (!auth || !auth.currentUser) {
-      console.log('⚠️  No Firebase user authenticated');
+      console.log('❌ No Firebase user authenticated');
+      console.log('   Auth object:', !!auth);
+      console.log('   Current user:', !!auth?.currentUser);
       return null;
     }
     
+    console.log('🔥 Getting fresh Firebase token...');
     const firebaseToken = await auth.currentUser.getIdToken();
-    console.log('🔥 Got Firebase token, exchanging for backend token...');
+    console.log('   Firebase token length:', firebaseToken.length);
     
-    // Exchange Firebase token for backend custom token
+    console.log('🔄 Exchanging Firebase token for backend token...');
+    
+    // Exchange Firebase token for backend token using login endpoint
     const response = await axios.post(
-      `${BASE_URL}/auth/exchange-token`,
+      `${BASE_URL}/auth/login`,
       {},
       {
         headers: { 'Authorization': `Bearer ${firebaseToken}` },
-        timeout: 10000
+        timeout: 15000
       }
     );
     
-    if (response.data.custom_token) {
-      backendToken = response.data.custom_token;
+    console.log('📊 LOGIN RESPONSE:');
+    console.log('   Status:', response.status);
+    console.log('   Data:', response.data);
+    
+    if (response.data.success && response.data.backend_token) {
+      backendToken = response.data.backend_token;
       localStorage.setItem('thakii_backend_token', backendToken);
-      console.log('✅ Backend token obtained and stored');
+      console.log('✅ New backend token obtained and stored');
+      console.log('   Token length:', backendToken.length);
       return backendToken;
     } else {
-      console.error('❌ No backend token in exchange response');
+      console.error('❌ No backend token in login response');
+      console.log('   Response data:', response.data);
       return null;
     }
     
   } catch (error) {
-    console.error('❌ Token exchange failed:', error);
+    console.error('❌ GET BACKEND TOKEN ERROR:', error);
+    console.error('   Error type:', typeof error);
+    console.error('   Error message:', error.message);
+    console.error('   Response status:', error.response?.status);
+    console.error('   Response data:', error.response?.data);
+    
+    // Try to use stored token as fallback
+    const fallbackToken = localStorage.getItem('thakii_backend_token');
+    if (fallbackToken) {
+      console.log('🔄 Using fallback stored token');
+      return fallbackToken;
+    }
+    
     return null;
   }
 };

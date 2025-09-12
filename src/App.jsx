@@ -9,6 +9,7 @@ import VideoList from './components/VideoList';
 import ServiceStatus from './components/ServiceStatus';
 import FirebaseLogin from './components/Auth/FirebaseLogin';
 import AdminDashboard from './components/AdminDashboard';
+import ErrorBoundary from './components/ErrorBoundary';
 import { apiService } from './services/api';
 
 function AppContent() {
@@ -48,33 +49,52 @@ function AppContent() {
       
       // Handle different response formats
       let videoArray = [];
+      let hasError = false;
       
       if (Array.isArray(response)) {
-        console.log('✅ Response is array format');
+        console.log('✅ Response is array format (legacy)');
         videoArray = response;
       } else if (response && typeof response === 'object') {
-        console.log('✅ Response is object format');
+        console.log('✅ Response is object format (correct)');
         console.log('   Keys:', Object.keys(response));
         
-        if (response.videos && Array.isArray(response.videos)) {
+        // Check for error first
+        if (response.error) {
+          console.error('❌ Backend returned error:', response.error);
+          hasError = true;
+          videoArray = [];
+        } else if (response.videos && Array.isArray(response.videos)) {
           videoArray = response.videos;
           console.log(`✅ Found videos array: ${response.videos.length} videos`);
           console.log(`✅ Total count: ${response.total || 0}`);
+          
+          // Log first few videos for debugging
+          if (response.videos.length > 0) {
+            console.log('📋 First video:', response.videos[0]);
+          }
         } else {
-          console.log('⚠️  No videos array in response');
+          console.log('⚠️  No videos array in response, using empty array');
           videoArray = [];
         }
         
         if (response.error_message) {
-          console.log('⚠️  Backend error message:', response.error_message);
+          console.log('⚠️  Backend warning:', response.error_message);
+          if (response.error_message.includes('index')) {
+            console.log('🔥 Firebase index issue detected');
+          }
         }
       } else {
-        console.log('❌ Unexpected response format');
+        console.log('❌ Unexpected response format:', response);
         videoArray = [];
       }
       
-      console.log(`🎯 Setting videos: ${videoArray.length} videos`);
+      console.log(`🎯 FINAL RESULT: Setting ${videoArray.length} videos`);
       setVideos(videoArray);
+      
+      // Show success message
+      if (!hasError) {
+        console.log(`✅ Video list updated successfully: ${videoArray.length} videos`);
+      }
       
     } catch (error) {
       console.error('❌ FETCH VIDEOS ERROR:', error);
@@ -139,9 +159,10 @@ function AppContent() {
   // Initial data fetch and real-time updates setup - DISABLED for manual refresh only
   useEffect(() => {
     if (currentUser) {
-      // Initial fetch for immediate data - DISABLED, use manual refresh only
-      // fetchHealthStatus();
-      // fetchVideos();
+      console.log('👤 User authenticated, starting initial data fetch...');
+      // Initial fetch for immediate data
+      fetchHealthStatus();
+      fetchVideos();
       
       // Set up real-time listeners
       let unsubscribeVideos;
@@ -294,9 +315,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
