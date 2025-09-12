@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
-import { firestoreService } from '../services/firestore';
-import { notificationService } from '../services/notifications';
 import TestNotificationButton from './TestNotificationButton';
 import ServerManagement from './ServerManagement';
 import AdminManagement from './AdminManagement';
