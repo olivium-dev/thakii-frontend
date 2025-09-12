@@ -176,4 +176,4 @@ The project uses:
 
 ### Support
 
-For technical support or feature requests, please refer to the main project documentation.
+For technical support or feature requests, please refer to the main project documentation.# Version 1.0.28 - UI Status Mapping Fix

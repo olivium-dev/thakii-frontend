@@ -67,10 +67,18 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error }) {
           color: 'text-blue-600 bg-blue-100' 
         };
       case 'done':
+      case 'completed':
         return { 
           icon: <FiCheck className="mr-1" />, 
           text: 'Ready', 
           color: 'text-green-600 bg-green-100' 
+        };
+      case 'processing':
+      case 'in_progress':
+        return { 
+          icon: <FiLoader className="mr-1 animate-spin" />, 
+          text: 'Processing', 
+          color: 'text-blue-600 bg-blue-100' 
         };
       case 'failed':
         return { 
@@ -145,7 +153,7 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error }) {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {video.status === 'done' ? (
+                      {(video.status === 'done' || video.status === 'completed') ? (
                         <button
                           onClick={() => onDownload(video.id || video.video_id)}
                           className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -154,7 +162,7 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error }) {
                         </button>
                       ) : (
                         <span className="text-xs text-gray-500">
-                          {video.status === 'in_progress' ? 'Processing...' : 
+                          {(video.status === 'in_progress' || video.status === 'processing') ? 'Processing...' : 
                            video.status === 'in_queue' ? 'Waiting in queue...' : 
                            video.status === 'failed' ? 'Processing failed' : 'Status unknown'}
                         </span>
