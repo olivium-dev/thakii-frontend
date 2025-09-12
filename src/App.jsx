@@ -158,23 +158,37 @@ function AppContent() {
 
   // Start auto-refresh system
   const startAutoRefresh = () => {
-    console.log('🔄 Starting auto-refresh every 5 seconds...');
+    console.log('🔄 === STARTING AUTO-REFRESH SYSTEM ===');
+    console.log('   Current auto-refresh state:', autoRefreshActive);
+    
+    // Stop any existing intervals first
+    stopAutoRefresh();
+    
+    console.log('✅ Setting auto-refresh active to true...');
     setAutoRefreshActive(true);
     
     // Set up 5-second interval
+    console.log('⏰ Setting up 5-second interval...');
     const interval = setInterval(() => {
-      console.log('🔄 Auto-refreshing video list...');
+      console.log('🔄 === AUTO-REFRESH TRIGGERED ===');
+      console.log('   Time:', new Date().toLocaleTimeString());
       fetchVideos();
     }, 5000);
     setRefreshInterval(interval);
+    console.log('✅ Interval set with ID:', interval);
     
     // Set up 2-minute timeout for modal
+    console.log('⏰ Setting up 2-minute timeout for modal...');
     const timeout = setTimeout(() => {
-      console.log('⏰ 2 minutes elapsed, showing refresh modal...');
+      console.log('⏰ === 2 MINUTES ELAPSED ===');
+      console.log('   Showing refresh modal...');
       setShowRefreshModal(true);
       stopAutoRefresh();
     }, 120000); // 2 minutes
     setRefreshTimeout(timeout);
+    console.log('✅ Timeout set with ID:', timeout);
+    
+    console.log('🎉 Auto-refresh system fully initialized!');
   };
   
   // Stop auto-refresh system
@@ -227,7 +241,10 @@ function AppContent() {
       fetchVideos();
       
       // Start auto-refresh after initial load
-      startAutoRefresh();
+      console.log('🚀 Triggering auto-refresh after initial load...');
+      setTimeout(() => {
+        startAutoRefresh();
+      }, 2000); // Wait 2 seconds after initial load
       
       // Set up real-time listeners
       let unsubscribeVideos;
