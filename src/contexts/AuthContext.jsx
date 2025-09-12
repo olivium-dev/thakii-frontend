@@ -59,12 +59,14 @@ export function AuthProvider({ children }) {
         }
       } else {
         console.error('❌ Token exchange failed:', response.status);
-        toast.error('Authentication failed - please try again');
+        // Don't show toast error that might crash the app
+        console.error('Authentication failed - please try again');
         return null;
       }
     } catch (error) {
       console.error('❌ Token exchange error:', error);
-      toast.error('Authentication error - please try again');
+      // Don't show toast error that might crash the app
+      console.error('Authentication error - please try again');
       return null;
     }
   };
@@ -114,33 +116,46 @@ export function AuthProvider({ children }) {
 
   // Listen for authentication state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log('🔄 Auth state changed:', user?.email || 'No user');
-      
-      if (user) {
-        // User is signed in
-        const userData = {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-          isAdmin: isAdmin(user.email)
-        };
-        
-        setCurrentUser(userData);
-        console.log('✅ User authenticated:', userData.email, userData.isAdmin ? '(Admin)' : '(User)');
-        
-        // Exchange Firebase token for backend token
-        await exchangeTokenWithBackend(user);
-        
-      } else {
-        // User is signed out
-        setCurrentUser(null);
-        clearBackendToken();
-        console.log('👋 User signed out');
-      }
-      
+    if (!auth) {
+      console.error('❌ Firebase auth not available');
       setLoading(false);
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      try {
+        console.log('🔄 Auth state changed:', user?.email || 'No user');
+        
+        if (user) {
+          // User is signed in
+          const userData = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            isAdmin: isAdmin(user.email)
+          };
+          
+          setCurrentUser(userData);
+          console.log('✅ User authenticated:', userData.email, userData.isAdmin ? '(Admin)' : '(User)');
+          
+          // Exchange Firebase token for backend token (don't await to prevent blocking)
+          exchangeTokenWithBackend(user).catch(error => {
+            console.error('Token exchange failed:', error);
+          });
+          
+        } else {
+          // User is signed out
+          setCurrentUser(null);
+          clearBackendToken();
+          console.log('👋 User signed out');
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('❌ Auth state change error:', error);
+        setLoading(false);
+      }
     });
 
     return unsubscribe;
