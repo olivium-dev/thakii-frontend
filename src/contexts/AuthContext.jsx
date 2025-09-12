@@ -31,13 +31,19 @@ export function AuthProvider({ children }) {
 
   // Exchange Firebase token for backend token
   const exchangeTokenWithBackend = async (firebaseUser) => {
+    console.log('🔄 === TOKEN EXCHANGE STARTED ===');
+    
     try {
-      console.log('🔄 Exchanging Firebase token for backend token...');
-      
+      console.log('🔥 Getting Firebase ID token...');
       const firebaseToken = await firebaseUser.getIdToken();
+      console.log('   Firebase token length:', firebaseToken.length);
+      console.log('   Firebase token preview:', firebaseToken.substring(0, 50) + '...');
+      
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://thakii-02.fanusdigital.site/thakii-be';
+      console.log('🌐 Calling backend login endpoint:', `${backendUrl}/auth/login`);
       
       // Call backend login endpoint (bypasses broken Firebase verification)
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://thakii-02.fanusdigital.site/thakii-be'}/auth/login`, {
+      const response = await fetch(`${backendUrl}/auth/login`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${firebaseToken}`,
@@ -45,28 +51,40 @@ export function AuthProvider({ children }) {
         }
       });
       
+      console.log('📊 BACKEND LOGIN RESPONSE:');
+      console.log('   Status:', response.status);
+      console.log('   OK:', response.ok);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('   Response data:', data);
+        
         if (data.success && data.backend_token) {
           setBackendToken(data.backend_token);
           localStorage.setItem('thakii_backend_token', data.backend_token);
           console.log('✅ 30-day backend token obtained and stored');
+          console.log('   Backend token length:', data.backend_token.length);
           console.log(`✅ User: ${data.user.email} (Admin: ${data.user.is_admin})`);
+          console.log('🎯 TOKEN EXCHANGE SUCCESSFUL');
           return data.backend_token;
         } else {
           console.error('❌ No backend token in response:', data);
+          console.log('🔍 Response analysis:');
+          console.log('   Success:', data.success);
+          console.log('   Has backend_token:', !!data.backend_token);
           return null;
         }
       } else {
+        const errorText = await response.text();
         console.error('❌ Token exchange failed:', response.status);
-        // Don't show toast error that might crash the app
-        console.error('Authentication failed - please try again');
+        console.error('   Error response:', errorText);
         return null;
       }
     } catch (error) {
-      console.error('❌ Token exchange error:', error);
-      // Don't show toast error that might crash the app
-      console.error('Authentication error - please try again');
+      console.error('❌ TOKEN EXCHANGE ERROR:', error);
+      console.error('   Error type:', typeof error);
+      console.error('   Error message:', error.message);
+      console.error('   Stack:', error.stack);
       return null;
     }
   };

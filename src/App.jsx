@@ -34,15 +34,58 @@ function AppContent() {
 
   // Fetch video list
   const fetchVideos = async () => {
+    console.log('🎬 === FETCH VIDEOS STARTED ===');
     setIsLoadingVideos(true);
+    
     try {
-      const videoList = await apiService.getVideoList();
-      setVideos(Array.isArray(videoList) ? videoList : []);
+      console.log('📡 Calling apiService.getVideoList()...');
+      const response = await apiService.getVideoList();
+      
+      console.log('📊 RAW BACKEND RESPONSE:');
+      console.log('   Type:', typeof response);
+      console.log('   Is Array:', Array.isArray(response));
+      console.log('   Response:', response);
+      
+      // Handle different response formats
+      let videoArray = [];
+      
+      if (Array.isArray(response)) {
+        console.log('✅ Response is array format');
+        videoArray = response;
+      } else if (response && typeof response === 'object') {
+        console.log('✅ Response is object format');
+        console.log('   Keys:', Object.keys(response));
+        
+        if (response.videos && Array.isArray(response.videos)) {
+          videoArray = response.videos;
+          console.log(`✅ Found videos array: ${response.videos.length} videos`);
+          console.log(`✅ Total count: ${response.total || 0}`);
+        } else {
+          console.log('⚠️  No videos array in response');
+          videoArray = [];
+        }
+        
+        if (response.error_message) {
+          console.log('⚠️  Backend error message:', response.error_message);
+        }
+      } else {
+        console.log('❌ Unexpected response format');
+        videoArray = [];
+      }
+      
+      console.log(`🎯 Setting videos: ${videoArray.length} videos`);
+      setVideos(videoArray);
+      
     } catch (error) {
-      console.error('Failed to fetch videos:', error);
+      console.error('❌ FETCH VIDEOS ERROR:', error);
+      console.error('   Error type:', typeof error);
+      console.error('   Error message:', error.message);
+      console.error('   Error response:', error.response?.data);
+      
       toast.error('Failed to load videos');
       setVideos([]);
     } finally {
+      console.log('🏁 FETCH VIDEOS COMPLETED - Setting loading to false');
       setIsLoadingVideos(false);
     }
   };

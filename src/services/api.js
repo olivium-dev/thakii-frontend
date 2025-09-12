@@ -67,21 +67,33 @@ const clearBackendToken = () => {
 // Add request interceptor to add auth token and log requests
 api.interceptors.request.use(
   async (config) => {
-    console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
+    console.log(`🌐 === API REQUEST: ${config.method?.toUpperCase()} ${config.url} ===`);
     
-    // Get backend token (exchanged from Firebase token)
-    const token = await getBackendToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log('🔑 Backend token attached to request');
-    } else {
-      console.log('⚠️  No backend token available');
+    try {
+      // Get backend token (exchanged from Firebase token)
+      console.log('🔑 Getting backend token...');
+      const token = await getBackendToken();
+      
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+        console.log('✅ Backend token attached to request');
+        console.log('   Token length:', token.length);
+        console.log('   Token preview:', token.substring(0, 50) + '...');
+      } else {
+        console.log('❌ No backend token available');
+        console.log('   This request will be unauthenticated');
+      }
+      
+      console.log('📡 Request headers:', config.headers);
+      return config;
+      
+    } catch (error) {
+      console.error('❌ REQUEST INTERCEPTOR ERROR:', error);
+      return config; // Continue with request even if token fails
     }
-    
-    return config;
   },
   (error) => {
-    console.error('Request error:', error);
+    console.error('❌ Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -130,8 +142,41 @@ export const apiService = {
 
   // Get list of all videos - LOCAL BACKEND ONLY
   async getVideoList() {
-    const response = await api.get('/list');
-    return response.data;
+    console.log('📹 === API SERVICE: GETTING VIDEO LIST ===');
+    
+    try {
+      console.log('📡 Making GET request to /list...');
+      const response = await api.get('/list');
+      
+      console.log('📊 API RESPONSE DETAILS:');
+      console.log('   Status:', response.status);
+      console.log('   Headers:', response.headers);
+      console.log('   Data type:', typeof response.data);
+      console.log('   Is array:', Array.isArray(response.data));
+      console.log('   Raw data:', response.data);
+      
+      if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
+        console.log('✅ Object response detected');
+        console.log('   Keys:', Object.keys(response.data));
+        console.log('   Videos:', response.data.videos);
+        console.log('   Total:', response.data.total);
+        
+        if (response.data.error_message) {
+          console.log('⚠️  Error message:', response.data.error_message);
+        }
+      }
+      
+      console.log('✅ Returning response.data to fetchVideos');
+      return response.data;
+      
+    } catch (error) {
+      console.error('❌ API SERVICE ERROR:');
+      console.error('   Error type:', typeof error);
+      console.error('   Error message:', error.message);
+      console.error('   Response status:', error.response?.status);
+      console.error('   Response data:', error.response?.data);
+      throw error;
+    }
   },
 
   // Get video status by ID - LOCAL BACKEND ONLY

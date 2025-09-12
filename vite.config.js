@@ -9,7 +9,7 @@ export default defineConfig({
     open: false,
     host: true,
     headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+      'Cross-Origin-Opener-Policy': 'unsafe-none',
       'Cross-Origin-Embedder-Policy': 'unsafe-none'
     },
     // Proxy API calls to the REMOTE backend service - DISABLED to prevent automatic requests
