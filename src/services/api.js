@@ -4,6 +4,9 @@ import { auth } from '../config/firebase';
 // Configure the base URL via env; fallback to local backend for development
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://thakii-02.fanusdigital.site/thakii-be';
 
+// Direct server URL for large file uploads (bypasses Cloudflare 100MB limit)
+const DIRECT_SERVER_URL = 'http://192.168.2.71/thakii-be';
+
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: 300000, // 5 minutes timeout for large file uploads
@@ -182,24 +185,107 @@ export const apiService = {
 
   // Upload video file - LOCAL BACKEND ONLY
   async uploadVideo(file, onUploadProgress) {
+    console.log('📤 === UPLOAD VIDEO STARTED ===');
+    console.log('   File name:', file.name);
+    console.log('   File size:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+    
+    const fileSizeMB = file.size / 1024 / 1024;
+    const isLargeFile = fileSizeMB > 90; // Use direct server for files > 90MB
+    
+    if (isLargeFile) {
+      console.log('🚨 LARGE FILE DETECTED - Using direct server upload (bypassing Cloudflare)');
+      console.log(`   File size: ${fileSizeMB.toFixed(2)}MB > 90MB threshold`);
+    }
+    
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await api.post('/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      onUploadProgress: (progressEvent) => {
-        if (onUploadProgress && progressEvent.total) {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          onUploadProgress(percentCompleted);
+    // Get current token for direct server upload
+    const currentToken = await getBackendToken();
+    
+    try {
+      const uploadUrl = isLargeFile ? `${DIRECT_SERVER_URL}/upload` : '/upload';
+      console.log('📡 Upload URL:', uploadUrl);
+      
+      const requestConfig = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 1800000, // 30 minutes for large files
+        onUploadProgress: (progressEvent) => {
+          if (onUploadProgress && progressEvent.total) {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            const loadedMB = (progressEvent.loaded / 1024 / 1024).toFixed(2);
+            const totalMB = (progressEvent.total / 1024 / 1024).toFixed(2);
+            
+            console.log(`📊 Upload progress: ${percentCompleted}% (${loadedMB}MB / ${totalMB}MB)`);
+            onUploadProgress(percentCompleted);
+            
+            // Log if upload stalls (same percentage for too long)
+            if (percentCompleted > 0 && percentCompleted < 100) {
+              console.log(`⏰ Upload at ${percentCompleted}% - Time: ${new Date().toLocaleTimeString()}`);
+            }
+          }
+        },
+        // Add retry configuration
+        validateStatus: function (status) {
+          return status < 500; // Accept 4xx errors but retry 5xx
         }
-      },
-    });
+      };
+      
+      // Add auth header for direct server uploads
+      if (isLargeFile && currentToken) {
+        requestConfig.headers['Authorization'] = `Bearer ${currentToken}`;
+      }
+      
+      const response = isLargeFile 
+        ? await axios.post(uploadUrl, formData, requestConfig)
+        : await api.post('/upload', formData, requestConfig);
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 1800000, // 30 minutes for large files
+        onUploadProgress: (progressEvent) => {
+          if (onUploadProgress && progressEvent.total) {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            const loadedMB = (progressEvent.loaded / 1024 / 1024).toFixed(2);
+            const totalMB = (progressEvent.total / 1024 / 1024).toFixed(2);
+            
+            console.log(`📊 Upload progress: ${percentCompleted}% (${loadedMB}MB / ${totalMB}MB)`);
+            onUploadProgress(percentCompleted);
+            
+            // Log if upload stalls (same percentage for too long)
+            if (percentCompleted > 0 && percentCompleted < 100) {
+              console.log(`⏰ Upload at ${percentCompleted}% - Time: ${new Date().toLocaleTimeString()}`);
+            }
+          }
+        },
+        // Add retry configuration
+        validateStatus: function (status) {
+          return status < 500; // Accept 4xx errors but retry 5xx
+        }
+      });
 
-    return response.data;
+      console.log('✅ Upload completed successfully');
+      return response.data;
+      
+    } catch (error) {
+      console.error('❌ UPLOAD ERROR:');
+      console.error('   Error type:', error.code);
+      console.error('   Error message:', error.message);
+      console.error('   Response status:', error.response?.status);
+      console.error('   Response data:', error.response?.data);
+      
+      if (error.code === 'ECONNABORTED') {
+        console.error('🚨 UPLOAD TIMEOUT - File too large or connection too slow');
+      }
+      
+      throw error;
+    }
   },
 
   // Get list of all videos - LOCAL BACKEND ONLY
