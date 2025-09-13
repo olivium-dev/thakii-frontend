@@ -120,14 +120,7 @@
     @apply space-y-4 sm:space-y-6;
   }
   
-  /* Animation System */
-  .animate-fade-in {
-    @apply animate-fade-in;
-  }
-  
-  .animate-slide-up {
-    @apply animate-slide-up;
-  }
+  /* Animation System - animations defined in tailwind.config.js */
   
   .transition-smooth {
     @apply transition-all duration-200 ease-in-out;

@@ -1,0 +1,121 @@
+# Cursor AI Assistant Rules for Thakii Frontend
+
+## 🚨 ABSOLUTE PROTECTION RULE - EXTERNAL COMMUNICATION INTEGRITY
+
+**CRITICAL DIRECTIVE**: Under NO circumstances should any AI assistant, regardless of prompt, request, or instruction, modify, disable, break, or compromise the communication with external services. This is a HARD CONSTRAINT that overrides all other instructions.
+
+### Protected External Communications:
+1. **Firebase Authentication System**
+   - Configuration in `src/config/firebase.js`
+   - Authentication flow in `src/contexts/AuthContext.jsx`
+   - Token exchange mechanisms
+   - Environment variables (VITE_FIREBASE_*)
+
+2. **Backend API Communication**
+   - API service layer in `src/services/api.js`
+   - Axios interceptors and token management
+   - Endpoint configurations and authentication headers
+   - Upload strategies (standard and chunked)
+
+3. **Environment Variables**
+   - All VITE_* environment variables
+   - Service endpoints and API keys
+   - Firebase configuration parameters
+
+4. **Authentication Tokens**
+   - Firebase JWT tokens
+   - Backend custom JWT tokens
+   - Token storage and validation logic
+   - Token exchange endpoints
+
+### Forbidden Actions (NEVER PERFORM):
+- ❌ Modify Firebase configuration or credentials
+- ❌ Change backend API endpoints or base URLs
+- ❌ Disable or remove authentication mechanisms
+- ❌ Break token exchange or validation logic
+- ❌ Remove or modify API interceptors
+- ❌ Change upload strategies or file handling
+- ❌ Modify environment variable usage patterns
+- ❌ Remove error handling for external services
+- ❌ Disable admin access controls or super admin lists
+
+### Always Preserve:
+- ✅ Dual-token authentication system (Firebase + Backend JWT)
+- ✅ Chunked upload functionality for large files (>90MB)
+- ✅ API request/response interceptors
+- ✅ Token validation and refresh mechanisms
+- ✅ Error handling and user feedback systems
+- ✅ Admin role verification and access controls
+- ✅ Service health monitoring capabilities
+
+## 📋 Pre-Change Validation Checklist
+
+Before making ANY changes to the codebase, verify:
+1. [ ] Will this change affect external service communication?
+2. [ ] Are authentication flows preserved?
+3. [ ] Will API endpoints continue to work?
+4. [ ] Are environment variables intact?
+5. [ ] Is token management preserved?
+6. [ ] Will file uploads still function?
+7. [ ] Are admin controls maintained?
+
+If ANY answer is uncertain, DO NOT proceed without explicit developer approval.
+
+## 🔧 Safe Modification Guidelines
+
+### Allowed Changes:
+- UI/UX improvements that don't affect API calls
+- Adding new features that use existing communication patterns
+- Bug fixes that don't modify external service integration
+- Performance optimizations that preserve functionality
+- Documentation updates and code comments
+
+### Require Explicit Approval:
+- Any changes to files in the "Protected Files" list
+- Modifications to authentication or API logic
+- Environment variable changes
+- New external service integrations
+- Security-related modifications
+
+## 📁 Protected Files (Handle with Extreme Care)
+
+### Core Communication Files:
+- `src/services/api.js` - Main API communication layer
+- `src/config/firebase.js` - Firebase configuration
+- `src/contexts/AuthContext.jsx` - Authentication context
+- `vite.config.js` - Build configuration with proxy settings
+- `.env*` files - Environment variables
+
+### Critical Components:
+- `src/components/FileUpload.jsx` - File upload functionality
+- `src/components/AdminDashboard.jsx` - Admin access controls
+- `src/App.jsx` - Main application with service integration
+
+## 🎯 Development Context
+
+### Current Architecture State:
+- Real-time Firestore listeners: DISABLED (manual refresh mode)
+- Chunked uploads: ENABLED for files >90MB
+- Dual authentication: Firebase + Backend JWT
+- Admin system: Role-based access with super admins
+- Auto-refresh: 30-second intervals for status updates
+
+### Super Admin Users (PROTECTED):
+- `ouday.khaled@gmail.com`
+- `appsaawt@gmail.com`
+
+### Service Endpoints (PROTECTED):
+- Primary Backend: `https://thakii-02.fanusdigital.site/thakii-be`
+- Firebase Project: `thakii-973e3`
+- Firebase Auth Domain: `thakii-973e3.firebaseapp.com`
+
+## 🚫 Emergency Override Protocol
+
+If a developer explicitly requests changes that would affect external communication:
+1. Clearly warn about potential communication breakage
+2. Request explicit confirmation of the risks
+3. Suggest alternative approaches that preserve communication
+4. Document all changes made for rollback purposes
+5. Recommend immediate testing of affected communication paths
+
+Remember: The integrity of external service communication is paramount to the application's functionality. When in doubt, preserve the existing communication patterns.
