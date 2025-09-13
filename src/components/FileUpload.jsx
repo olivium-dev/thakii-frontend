@@ -99,15 +99,15 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
 
   return (
     <div className="card">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+      <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">
         Upload Video File
       </h2>
 
-      {/* Upload Area */}
+      {/* Upload Area - Responsive sizing */}
       <div
-        className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors duration-200 ${
+        className={`relative border-2 border-dashed rounded-lg p-4 sm:p-6 lg:p-8 text-center transition-colors duration-200 ${
           dragActive
-            ? 'border-primary-500 bg-primary-50'
+            ? 'border-blue-500 bg-blue-50'
             : selectedFile
             ? 'border-green-500 bg-green-50'
             : 'border-gray-300 hover:border-gray-400'
@@ -130,20 +130,22 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
 
         {selectedFile ? (
           <div className="space-y-4">
-            <div className="flex items-center justify-center space-x-3">
-              <File className="w-8 h-8 text-green-500" />
-              <div className="text-left">
-                <p className="text-sm font-medium text-gray-900">
+            {/* File info - Mobile optimized */}
+            <div className="flex items-start space-x-3 p-3 bg-white rounded-lg border border-green-200">
+              <File className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm font-medium text-gray-900 truncate" title={selectedFile.name}>
                   {selectedFile.name}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 mt-1">
                   {formatFileSize(selectedFile.size)}
                 </p>
               </div>
               <button
                 onClick={clearSelection}
-                className="text-gray-400 hover:text-gray-600"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
                 disabled={isUploading}
+                title="Remove file"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -151,52 +153,64 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
 
             {/* Upload Progress */}
             {isUploading && (
-              <div className="space-y-2">
-                <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="space-y-3">
+                <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
-                    className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-blue-600 h-3 rounded-full transition-all duration-300 flex items-center justify-center"
                     style={{ width: `${uploadProgress}%` }}
-                  />
+                  >
+                    {uploadProgress > 20 && (
+                      <span className="text-xs text-white font-medium">
+                        {uploadProgress}%
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600">
-                  {selectedFile && (selectedFile.size / 1024 / 1024) > 90 
-                    ? `Uploading chunks... ${uploadProgress}%` 
-                    : `Uploading... ${uploadProgress}%`}
-                </p>
-                {selectedFile && (selectedFile.size / 1024 / 1024) > 90 && (
-                  <p className="text-xs text-blue-600">
-                    Large file detected - Using chunked upload to bypass size limits
+                <div className="text-center">
+                  <p className="text-sm font-medium text-gray-700">
+                    {selectedFile && (selectedFile.size / 1024 / 1024) > 90 
+                      ? `Uploading chunks... ${uploadProgress}%` 
+                      : `Uploading... ${uploadProgress}%`}
                   </p>
-                )}
+                  {selectedFile && (selectedFile.size / 1024 / 1024) > 90 && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      Large file detected - Using chunked upload
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* Upload Button - FIXED */}
+            {/* Upload Button - Mobile optimized */}
             {!isUploading && (
               <button
                 onClick={handleUpload}
-                className="btn-primary"
+                className="min-h-[44px] w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                 type="button"
               >
-                <Upload className="w-4 h-4 mr-2" />
+                <Upload className="w-5 h-5 mr-2" />
                 Upload File
               </button>
             )}
           </div>
         ) : (
-          <div className="space-y-4 cursor-pointer">
-            <Upload className="w-12 h-12 text-gray-400 mx-auto" />
+          <div className="space-y-3 sm:space-y-4 cursor-pointer">
+            <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto" />
             <div>
-              <p className="text-lg font-medium text-gray-900">
+              <p className="text-base sm:text-lg font-medium text-gray-900">
                 Drop your video file here
               </p>
-              <p className="text-sm text-gray-500">
-                or click to browse files
+              <p className="text-sm text-gray-500 mt-1">
+                or tap to browse files
               </p>
             </div>
-            <div className="flex items-center justify-center space-x-1 text-xs text-gray-400">
-              <AlertCircle className="w-3 h-3" />
-              <span>Supports MP4, AVI, MOV, WMV, MKV (max 2GB)</span>
+            {/* Support info - More compact on mobile */}
+            <div className="flex items-center justify-center space-x-1 text-xs text-gray-400 px-2">
+              <AlertCircle className="w-3 h-3 flex-shrink-0" />
+              <span className="text-center">
+                <span className="hidden sm:inline">Supports MP4, AVI, MOV, WMV, MKV (max 2GB)</span>
+                <span className="sm:hidden">MP4, AVI, MOV, WMV, MKV (max 2GB)</span>
+              </span>
             </div>
           </div>
         )}

@@ -121,39 +121,79 @@ function AdminDashboard() {
                   No videos found
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Video</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {videos.slice(0, 10).map((video) => (
-                        <tr key={video.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{video.video_name}</div>
-                            <div className="text-sm text-gray-500">ID: {video.id}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {video.user_email}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(video.status)}`}>
-                              {video.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {video.date ? new Date(video.date).toLocaleDateString() : 'N/A'}
-                          </td>
+                <>
+                  {/* Mobile Card Layout */}
+                  <div className="space-y-4 md:hidden">
+                    {videos.slice(0, 10).map((video) => (
+                      <div key={video.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-medium text-gray-900 truncate" title={video.video_name}>
+                              {video.video_name}
+                            </h4>
+                            <p className="text-xs text-gray-500 mt-1">ID: {video.id}</p>
+                          </div>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(video.status)} flex-shrink-0`}>
+                            {video.status}
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center text-sm text-gray-600">
+                            <span className="font-medium mr-2">User:</span>
+                            <span className="truncate" title={video.user_email}>{video.user_email}</span>
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600">
+                            <span className="font-medium mr-2">Date:</span>
+                            <span>{video.date ? new Date(video.date).toLocaleDateString() : 'N/A'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop Table Layout */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Video</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">User</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">Date</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {videos.slice(0, 10).map((video) => (
+                          <tr key={video.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4">
+                              <div className="text-sm font-medium text-gray-900 truncate" title={video.video_name}>
+                                {video.video_name}
+                              </div>
+                              <div className="text-sm text-gray-500">ID: {video.id}</div>
+                              {/* Show user on mobile table view */}
+                              <div className="text-sm text-gray-500 lg:hidden mt-1">
+                                User: {video.user_email}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500 hidden lg:table-cell">
+                              <div className="max-w-[200px] truncate" title={video.user_email}>
+                                {video.user_email}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(video.status)}`}>
+                                {video.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden xl:table-cell">
+                              {video.date ? new Date(video.date).toLocaleDateString() : 'N/A'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
           </div>

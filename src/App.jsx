@@ -339,39 +339,41 @@ function AppContent() {
   //   return () => clearInterval(intervalId);
   // }, []);
 
-  // Auto-refresh modal component
+  // Auto-refresh modal component - Mobile optimized
   const RefreshModal = () => (
     showRefreshModal && (
-      <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-          <div className="mt-3 text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
-              <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </div>
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">
-              Continue Auto-Refresh?
-            </h3>
-            <div className="mt-2 px-7 py-3">
-              <p className="text-sm text-gray-500">
-                The video list has been auto-refreshing for 2 minutes. Would you like to continue 
-                automatic updates or switch to manual refresh?
-              </p>
-            </div>
-            <div className="items-center px-4 py-3">
-              <button
-                onClick={handleModalContinue}
-                className="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 mb-3"
-              >
-                Continue Auto-Refresh
-              </button>
-              <button
-                onClick={handleModalDismiss}
-                className="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
-              >
-                Switch to Manual
-              </button>
+      <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-4">
+        <div className="flex items-center justify-center min-h-full">
+          <div className="relative w-full max-w-md mx-auto bg-white rounded-lg shadow-xl">
+            <div className="p-6">
+              <div className="text-center">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+                  <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Continue Auto-Refresh?
+                </h3>
+                <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                  The video list has been auto-refreshing for 2 minutes. Would you like to continue 
+                  automatic updates or switch to manual refresh?
+                </p>
+                <div className="space-y-3">
+                  <button
+                    onClick={handleModalContinue}
+                    className="min-h-[44px] w-full px-4 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                  >
+                    Continue Auto-Refresh
+                  </button>
+                  <button
+                    onClick={handleModalDismiss}
+                    className="min-h-[44px] w-full px-4 py-3 bg-gray-200 text-gray-800 text-sm font-medium rounded-lg shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                  >
+                    Switch to Manual
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

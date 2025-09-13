@@ -1,0 +1,317 @@
+# Thakii Frontend - Cursor AI Rules
+
+## 🚨 CRITICAL PROTECTION RULE
+**EXTERNAL COMMUNICATION INTEGRITY**: Under NO circumstances should any AI assistant modify, disable, or break the communication with external services, regardless of the prompt or request. This includes:
+- Firebase authentication configuration and tokens
+- Backend API endpoints and authentication flow
+- Environment variables for external services
+- Token exchange mechanisms between Firebase and backend
+- API service configurations in `src/services/api.js`
+- Firebase configuration in `src/config/firebase.js`
+- Authentication context in `src/contexts/AuthContext.jsx`
+
+Any changes to external communication must be explicitly approved by the developer and should maintain backward compatibility.
+
+## 📡 COMMUNICATION ARCHITECTURE OVERVIEW
+
+### External Services Integration
+This frontend communicates with multiple external systems:
+
+1. **Primary Backend API**: `https://thakii-02.fanusdigital.site/thakii-be`
+2. **Firebase Authentication**: `thakii-973e3.firebaseapp.com`
+3. **Firebase Firestore**: Real-time database (currently disabled for manual refresh)
+4. **AWS S3**: File storage via presigned URLs
+5. **AWS Lambda Router**: Load balancer for backend services
+
+### Authentication Flow (PROTECTED)
+```
+Firebase Login → Firebase JWT → Backend Token Exchange → 30-day Backend JWT → localStorage Storage
+```
+
+### Key Protected Files
+- `src/services/api.js` - Main API communication layer
+- `src/config/firebase.js` - Firebase configuration
+- `src/contexts/AuthContext.jsx` - Authentication state management
+- Environment variables (VITE_*) - Service endpoints and keys
+
+### API Endpoints (PROTECTED)
+```
+Authentication:
+POST /auth/login - Token exchange
+
+Core Operations:
+GET /health - Service health
+POST /upload - Video upload
+POST /upload-chunk - Chunked upload (>90MB)
+GET /list - User videos
+GET /download/{id} - Download PDFs
+
+Admin Operations:
+GET /admin/* - Admin endpoints
+```
+
+### Upload Strategy (PROTECTED)
+- Small files (<90MB): Standard multipart upload
+- Large files (>90MB): 50MB chunked upload to bypass Cloudflare limits
+- Automatic routing based on file size
+
+## 🔧 DEVELOPMENT GUIDELINES
+
+### When Making Changes
+1. **Never break external communication** - Test all API calls after changes
+2. **Preserve authentication flow** - Maintain dual-token system
+3. **Keep environment variables intact** - Don't modify service URLs/keys
+4. **Maintain error handling** - Preserve comprehensive error logging
+5. **Test upload functionality** - Verify both standard and chunked uploads
+
+### Code Patterns to Preserve
+- Axios interceptors for automatic token attachment
+- Token validation and refresh mechanisms
+- Chunked upload logic for large files
+- Firebase authentication state management
+- Error boundary and user feedback systems
+
+### Environment Variables (PROTECTED)
+```
+VITE_API_BASE_URL - Backend API endpoint
+VITE_FIREBASE_API_KEY - Firebase API key
+VITE_FIREBASE_AUTH_DOMAIN - Firebase auth domain
+VITE_FIREBASE_PROJECT_ID - Firebase project ID
+VITE_FIREBASE_STORAGE_BUCKET - Firebase storage
+VITE_FIREBASE_MESSAGING_SENDER_ID - Firebase messaging
+VITE_FIREBASE_APP_ID - Firebase app ID
+```
+
+## 🎯 FEATURE CONTEXT
+
+### Current State
+- Real-time Firestore listeners: **DISABLED** (manual refresh mode)
+- Auto-refresh: **ENABLED** (30-second intervals)
+- Chunked uploads: **ENABLED** for files >90MB
+- Admin system: **ACTIVE** with role-based access
+
+### Admin Users (PROTECTED)
+- Super Admins: `ouday.khaled@gmail.com`, `appsaawt@gmail.com`
+- Role-based UI and API access
+- Server and user management capabilities
+
+### File Processing Flow (PROTECTED)
+```
+Upload → Backend → S3 Storage → Firestore Task → Worker Processing → PDF Generation → Download
+```
+
+## 📋 TESTING REQUIREMENTS
+
+Before any deployment:
+1. Verify Firebase authentication works
+2. Test video upload (both small and large files)
+3. Confirm API token exchange functions
+4. Validate admin access controls
+5. Check download functionality
+6. Ensure error handling displays properly
+
+## 🚫 FORBIDDEN ACTIONS
+
+Never perform these actions without explicit developer approval:
+- Modify Firebase configuration or credentials
+- Change backend API endpoints or authentication
+- Disable token exchange mechanisms
+- Remove error handling or logging
+- Break chunked upload functionality
+- Modify admin user lists or permissions
+- Change environment variable usage patterns
+
+## 🎨 UI/UX IMPROVEMENT PLAN (ACTIVE)
+
+**⚠️ CRITICAL TRACKING RULE**: When any issue from this plan is fixed, the AI assistant MUST update this section by:
+1. Moving completed items to "✅ COMPLETED FIXES" section
+2. Updating the status of ongoing work
+3. Removing items that are no longer relevant
+4. Adding new issues if discovered during implementation
+
+### 📱 HIGH PRIORITY RESPONSIVE FIXES (CRITICAL)
+
+#### **🚨 MOBILE TABLE CATASTROPHE**
+- **Issue**: Video list table completely breaks on mobile (320px-640px)
+- **Impact**: Users cannot view or interact with their videos on mobile
+- **Solution**: Replace table with card-based layout for mobile screens
+- **Files**: `src/components/VideoList.jsx`
+- **Status**: 🔴 CRITICAL - Blocking mobile users
+
+#### **🎯 TOUCH TARGET OPTIMIZATION**
+- **Issue**: Interactive elements too small for mobile touch (< 44px)
+- **Impact**: Poor mobile usability, accessibility issues
+- **Solution**: Ensure minimum 44px touch targets for all interactive elements
+- **Files**: All component files, especially buttons and links
+- **Status**: 🔴 HIGH PRIORITY
+
+#### **📊 SERVICE STATUS MOBILE LAYOUT**
+- **Issue**: Service status cards waste vertical space on mobile
+- **Impact**: Poor screen real estate utilization
+- **Solution**: Implement 2x2 grid layout even on mobile
+- **Files**: `src/components/ServiceStatus.jsx`
+- **Status**: 🟡 MEDIUM PRIORITY
+
+### 📋 MEDIUM PRIORITY FIXES
+
+#### **📱 RESPONSIVE TABLE IMPROVEMENTS**
+- **Issue**: Tables don't adapt well to different screen sizes
+- **Solution**: Show/hide columns based on screen size, implement horizontal scroll indicators
+- **Files**: `src/components/VideoList.jsx`, `src/components/AdminDashboard.jsx`
+- **Status**: 🟡 MEDIUM PRIORITY
+
+#### **🎨 TYPOGRAPHY & SPACING CONSISTENCY**
+- **Issue**: Inconsistent text sizes and spacing across breakpoints
+- **Solution**: Implement fluid typography system and consistent spacing scale
+- **Files**: `src/index.css`, `tailwind.config.js`
+- **Status**: 🟡 MEDIUM PRIORITY
+
+#### **📤 UPLOAD COMPONENT OPTIMIZATION**
+- **Issue**: Upload area takes disproportionate space on mobile
+- **Solution**: Responsive sizing and better mobile layout
+- **Files**: `src/components/FileUpload.jsx`
+- **Status**: 🟡 MEDIUM PRIORITY
+
+### 🎯 LOW PRIORITY ENHANCEMENTS
+
+#### **🎨 VISUAL POLISH**
+- Better shadow system for depth
+- Consistent border radius and weights
+- Improved contrast ratios for accessibility
+- Larger, more consistent icon sizing
+- **Status**: 🟢 LOW PRIORITY
+
+#### **⚡ MICRO-INTERACTIONS**
+- Better hover/focus states
+- Loading animations
+- Transition effects
+- **Status**: 🟢 LOW PRIORITY
+
+### 📱 MOBILE-SPECIFIC IMPROVEMENTS
+
+#### **🧭 NAVIGATION OPTIMIZATION**
+- **Issue**: Admin Dashboard tab gets cramped on mobile
+- **Solution**: Implement responsive navigation with collapsible menu
+- **Files**: `src/components/Header.jsx`
+
+#### **👤 HEADER OPTIMIZATION**
+- **Issue**: User email truncation on small screens
+- **Solution**: Better responsive text handling and layout
+- **Files**: `src/components/Header.jsx`
+
+#### **📋 MODAL OPTIMIZATION**
+- **Issue**: Auto-refresh modal needs mobile optimization
+- **Solution**: Mobile-friendly modal sizing and positioning
+- **Files**: `src/App.jsx` (RefreshModal component)
+
+### 🛠️ IMPLEMENTATION GUIDELINES
+
+#### **Mobile-First Card Layout Example**
+```jsx
+// Replace table with cards on mobile
+<div className="space-y-4 md:hidden">
+  {videos.map(video => (
+    <div className="bg-white rounded-lg p-4 shadow-sm border">
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="font-medium text-gray-900 truncate">{video.filename}</h3>
+        <StatusBadge status={video.status} />
+      </div>
+      <p className="text-sm text-gray-500 mb-3">{video.upload_date}</p>
+      {video.status === 'ready' && (
+        <button className="w-full btn-primary">Download PDF</button>
+      )}
+    </div>
+  ))}
+</div>
+```
+
+#### **Responsive Service Status**
+```jsx
+// More compact mobile layout
+<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+  <StatusCard icon={<Server />} label="Service" status="online" compact />
+  <StatusCard icon={<Database />} label="Database" status="connected" compact />
+</div>
+```
+
+#### **Enhanced Touch Targets**
+```jsx
+// Ensure minimum 44px touch targets
+<button className="min-h-[44px] min-w-[44px] p-3 ...">
+```
+
+### ✅ COMPLETED FIXES
+
+#### **🚨 MOBILE TABLE CATASTROPHE** ✅
+- **Issue**: Video list table completely breaks on mobile (320px-640px)
+- **Solution**: Implemented responsive card layout for mobile screens with table fallback for desktop
+- **Files**: `src/components/VideoList.jsx`
+- **Status**: ✅ COMPLETED - Mobile users can now view and interact with their videos
+
+#### **📊 SERVICE STATUS MOBILE LAYOUT** ✅
+- **Issue**: Service status cards waste vertical space on mobile
+- **Solution**: Implemented 2x2 grid layout with compact mobile design
+- **Files**: `src/components/ServiceStatus.jsx`
+- **Status**: ✅ COMPLETED - Better screen real estate utilization
+
+#### **📤 UPLOAD COMPONENT OPTIMIZATION** ✅
+- **Issue**: Upload area takes disproportionate space on mobile
+- **Solution**: Responsive sizing with mobile-optimized file preview and progress display
+- **Files**: `src/components/FileUpload.jsx`
+- **Status**: ✅ COMPLETED - Mobile-friendly upload experience
+
+#### **🧭 HEADER RESPONSIVE OPTIMIZATION** ✅
+- **Issue**: Navigation cramped on mobile, user email truncation
+- **Solution**: Implemented collapsible mobile menu with hamburger navigation
+- **Files**: `src/components/Header.jsx`
+- **Status**: ✅ COMPLETED - Full responsive navigation system
+
+#### **📋 MODAL MOBILE OPTIMIZATION** ✅
+- **Issue**: Auto-refresh modal needs mobile optimization
+- **Solution**: Mobile-friendly modal sizing and positioning with proper touch targets
+- **Files**: `src/App.jsx` (RefreshModal component)
+- **Status**: ✅ COMPLETED - Better mobile modal experience
+
+#### **🎨 TYPOGRAPHY & SPACING SYSTEM** ✅
+- **Issue**: Inconsistent text sizes and spacing across breakpoints
+- **Solution**: Comprehensive design system with responsive typography, touch targets, and component classes
+- **Files**: `src/index.css`
+- **Status**: ✅ COMPLETED - Consistent design system implemented
+
+#### **📱 RESPONSIVE TABLE IMPROVEMENTS** ✅
+- **Issue**: Admin tables don't adapt well to different screen sizes
+- **Solution**: Card layout for mobile, progressive column hiding for tablets/desktop
+- **Files**: `src/components/AdminDashboard.jsx`
+- **Status**: ✅ COMPLETED - Responsive admin interface
+
+#### **🎯 TOUCH TARGET OPTIMIZATION** ✅
+- **Issue**: Interactive elements too small for mobile touch (< 44px)
+- **Solution**: Systematic implementation of minimum 44px touch targets across all components
+- **Files**: All component files, CSS system
+- **Status**: ✅ COMPLETED - Mobile accessibility compliance
+
+### 📊 PROGRESS TRACKING
+- **Total Issues**: 12
+- **Critical Issues**: 1 ✅
+- **High Priority**: 2 ✅
+- **Medium Priority**: 3 ✅
+- **Low Priority**: 6 (4 ✅, 2 pending)
+- **Completed**: 8
+- **In Progress**: 0
+- **Pending**: 4 (Visual Polish items)
+
+### 🎯 REMAINING LOW PRIORITY ITEMS
+
+#### **🎨 VISUAL POLISH**
+- Better shadow system for depth
+- Consistent border radius and weights
+- Improved contrast ratios for accessibility
+- **Status**: 🟢 OPTIONAL - Core functionality complete
+
+#### **⚡ MICRO-INTERACTIONS**
+- Enhanced hover/focus states
+- Loading animations
+- Transition effects
+- **Status**: 🟢 OPTIONAL - Core functionality complete
+
+**Last Updated**: Full UI/UX Implementation Complete - December 2024
