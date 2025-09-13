@@ -159,8 +159,15 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
                   />
                 </div>
                 <p className="text-sm text-gray-600">
-                  Uploading... {uploadProgress}%
+                  {selectedFile && (selectedFile.size / 1024 / 1024) > 90 
+                    ? `Uploading chunks... ${uploadProgress}%` 
+                    : `Uploading... ${uploadProgress}%`}
                 </p>
+                {selectedFile && (selectedFile.size / 1024 / 1024) > 90 && (
+                  <p className="text-xs text-blue-600">
+                    Large file detected - Using chunked upload to bypass size limits
+                  </p>
+                )}
               </div>
             )}
 

@@ -180,31 +180,31 @@ export const apiService = {
     return response.data;
   },
 
-  // Upload video file - LOCAL BACKEND ONLY
+  // Upload video file with chunked upload for large files
   async uploadVideo(file, onUploadProgress) {
     console.log('📤 === UPLOAD VIDEO STARTED ===');
     console.log('   File name:', file.name);
     console.log('   File size:', (file.size / 1024 / 1024).toFixed(2), 'MB');
     
     const fileSizeMB = file.size / 1024 / 1024;
-    const isLargeFile = fileSizeMB > 90; // Use direct server for files > 90MB
+    const useChunkedUpload = fileSizeMB > 90; // Use chunked upload for files > 90MB
     
-    if (isLargeFile) {
-      console.log('🚨 LARGE FILE DETECTED - Using direct server upload (bypassing Cloudflare)');
-      console.log(`   File size: ${fileSizeMB.toFixed(2)}MB > 90MB threshold`);
+    if (useChunkedUpload) {
+      console.log('🚨 LARGE FILE - Using chunked upload (bypasses Cloudflare 100MB limit)');
+      return await this.uploadVideoChunked(file, onUploadProgress);
+    } else {
+      console.log('📤 SMALL FILE - Using standard upload');
+      return await this.uploadVideoStandard(file, onUploadProgress);
     }
-    
+  },
+
+  // Standard upload for small files (< 90MB)
+  async uploadVideoStandard(file, onUploadProgress) {
     const formData = new FormData();
     formData.append('file', file);
 
-    // Get current token for direct server upload
-    const currentToken = await getBackendToken();
-    
     try {
-      const uploadUrl = isLargeFile ? `${DIRECT_SERVER_URL}/upload` : '/upload';
-      console.log('📡 Upload URL:', uploadUrl);
-      
-      const requestConfig = {
+      const response = await api.post('/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -214,73 +214,95 @@ export const apiService = {
             const percentCompleted = Math.round(
               (progressEvent.loaded * 100) / progressEvent.total
             );
-            const loadedMB = (progressEvent.loaded / 1024 / 1024).toFixed(2);
-            const totalMB = (progressEvent.total / 1024 / 1024).toFixed(2);
-            
-            console.log(`📊 Upload progress: ${percentCompleted}% (${loadedMB}MB / ${totalMB}MB)`);
             onUploadProgress(percentCompleted);
-            
-            // Log if upload stalls (same percentage for too long)
-            if (percentCompleted > 0 && percentCompleted < 100) {
-              console.log(`⏰ Upload at ${percentCompleted}% - Time: ${new Date().toLocaleTimeString()}`);
-            }
           }
-        },
-        // Add retry configuration
-        validateStatus: function (status) {
-          return status < 500; // Accept 4xx errors but retry 5xx
-        }
-      };
-      
-      // Add auth header for direct server uploads
-      if (isLargeFile && currentToken) {
-        requestConfig.headers['Authorization'] = `Bearer ${currentToken}`;
-      }
-      
-      const response = isLargeFile 
-        ? await axios.post(uploadUrl, formData, requestConfig)
-        : await api.post('/upload', formData, requestConfig);
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: 1800000, // 30 minutes for large files
-        onUploadProgress: (progressEvent) => {
-          if (onUploadProgress && progressEvent.total) {
-            const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
-            );
-            const loadedMB = (progressEvent.loaded / 1024 / 1024).toFixed(2);
-            const totalMB = (progressEvent.total / 1024 / 1024).toFixed(2);
-            
-            console.log(`📊 Upload progress: ${percentCompleted}% (${loadedMB}MB / ${totalMB}MB)`);
-            onUploadProgress(percentCompleted);
-            
-            // Log if upload stalls (same percentage for too long)
-            if (percentCompleted > 0 && percentCompleted < 100) {
-              console.log(`⏰ Upload at ${percentCompleted}% - Time: ${new Date().toLocaleTimeString()}`);
-            }
-          }
-        },
-        // Add retry configuration
-        validateStatus: function (status) {
-          return status < 500; // Accept 4xx errors but retry 5xx
         }
       });
 
-      console.log('✅ Upload completed successfully');
+      console.log('✅ Standard upload completed successfully');
       return response.data;
       
     } catch (error) {
-      console.error('❌ UPLOAD ERROR:');
-      console.error('   Error type:', error.code);
-      console.error('   Error message:', error.message);
-      console.error('   Response status:', error.response?.status);
-      console.error('   Response data:', error.response?.data);
+      console.error('❌ STANDARD UPLOAD ERROR:', error);
+      throw error;
+    }
+  },
+
+  // Chunked upload for large files (> 90MB)
+  async uploadVideoChunked(file, onUploadProgress) {
+    console.log('📦 === CHUNKED UPLOAD STARTED ===');
+    
+    const chunkSize = 50 * 1024 * 1024; // 50MB chunks
+    const totalChunks = Math.ceil(file.size / chunkSize);
+    const fileId = `chunked-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    console.log(`   Chunk size: 50MB`);
+    console.log(`   Total chunks: ${totalChunks}`);
+    console.log(`   File ID: ${fileId}`);
+    
+    try {
+      let totalUploaded = 0;
       
-      if (error.code === 'ECONNABORTED') {
-        console.error('🚨 UPLOAD TIMEOUT - File too large or connection too slow');
+      // Upload chunks sequentially
+      for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+        const start = chunkIndex * chunkSize;
+        const end = Math.min(start + chunkSize, file.size);
+        const chunk = file.slice(start, end);
+        
+        console.log(`📦 Uploading chunk ${chunkIndex + 1}/${totalChunks} (${(chunk.size / 1024 / 1024).toFixed(1)}MB)...`);
+        
+        const formData = new FormData();
+        formData.append('chunk', chunk, `chunk_${chunkIndex}`);
+        formData.append('chunk_index', chunkIndex.toString());
+        formData.append('total_chunks', totalChunks.toString());
+        formData.append('file_id', fileId);
+        formData.append('original_filename', file.name);
+        
+        const chunkResponse = await api.post('/upload-chunk', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          timeout: 300000, // 5 minutes per chunk
+        });
+        
+        if (chunkResponse.status === 200) {
+          totalUploaded += chunk.size;
+          const overallProgress = Math.round((totalUploaded / file.size) * 100);
+          console.log(`   ✅ Chunk ${chunkIndex + 1} uploaded - Overall progress: ${overallProgress}%`);
+          
+          if (onUploadProgress) {
+            onUploadProgress(overallProgress);
+          }
+        } else {
+          throw new Error(`Chunk ${chunkIndex + 1} upload failed: ${chunkResponse.status}`);
+        }
       }
       
+      console.log('🔧 Assembling chunks into final file...');
+      
+      // Assemble file
+      const assembleResponse = await api.post('/assemble-file', {
+        file_id: fileId,
+        total_chunks: totalChunks,
+        original_filename: file.name
+      }, {
+        timeout: 600000, // 10 minutes for assembly
+      });
+      
+      if (assembleResponse.status === 200) {
+        console.log('✅ Chunked upload completed successfully!');
+        if (onUploadProgress) {
+          onUploadProgress(100);
+        }
+        return assembleResponse.data;
+      } else {
+        throw new Error(`File assembly failed: ${assembleResponse.status}`);
+      }
+      
+    } catch (error) {
+      console.error('❌ CHUNKED UPLOAD ERROR:');
+      console.error('   Error:', error.message);
+      console.error('   Response:', error.response?.data);
       throw error;
     }
   },
