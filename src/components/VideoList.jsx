@@ -103,7 +103,7 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
           {autoRefreshActive && (
             <div className="flex items-center text-green-600 text-sm">
               <FiRefreshCw className="animate-spin mr-1" />
-              Auto-refreshing every 5s
+              Auto-refreshing every 30s
               <button
                 onClick={onStopAutoRefresh}
                 className="ml-2 text-xs text-gray-500 hover:text-gray-700 underline"

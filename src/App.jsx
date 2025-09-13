@@ -167,13 +167,21 @@ function AppContent() {
     console.log('✅ Setting auto-refresh active to true...');
     setAutoRefreshActive(true);
     
-    // Set up 5-second interval
-    console.log('⏰ Setting up 5-second interval...');
+    // Set up 30-second interval
+    console.log('⏰ Setting up 30-second interval...');
     const interval = setInterval(() => {
       console.log('🔄 === AUTO-REFRESH TRIGGERED ===');
       console.log('   Time:', new Date().toLocaleTimeString());
+      console.log('   Modal visible:', showRefreshModal);
+      
+      // CRITICAL: Don't refresh if modal is showing
+      if (showRefreshModal) {
+        console.log('🛑 SKIPPING refresh - modal is visible');
+        return;
+      }
+      
       fetchVideos();
-    }, 5000);
+    }, 30000); // Changed to 30 seconds
     setRefreshInterval(interval);
     console.log('✅ Interval set with ID:', interval);
     
@@ -385,28 +393,33 @@ function AppContent() {
         isAdmin={isAdmin}
       />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
         {activeTab === 'videos' ? (
-          <div className="space-y-8">
-            {/* Service Status */}
-            <ServiceStatus healthStatus={healthStatus} />
-
-            {/* File Upload */}
-            <FileUpload 
-              onUpload={handleUpload}
-              isUploading={isUploading}
-              uploadProgress={uploadProgress}
-            />
-
-            {/* Video List */}
-            <VideoList
-              videos={videos}
-              onDownload={handleDownload}
-              onRefresh={handleRefresh}
-              isLoading={isLoadingVideos}
-              autoRefreshActive={autoRefreshActive}
-              onStopAutoRefresh={stopAutoRefresh}
-            />
+          <div className="space-y-4 sm:space-y-8">
+            {/* Mobile-first responsive layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+              {/* Left column - Upload and Status (full width on mobile) */}
+              <div className="lg:col-span-1 space-y-4 sm:space-y-6">
+                <ServiceStatus healthStatus={healthStatus} />
+                <FileUpload 
+                  onUpload={handleUpload}
+                  isUploading={isUploading}
+                  uploadProgress={uploadProgress}
+                />
+              </div>
+              
+              {/* Right column - Video List (full width on mobile) */}
+              <div className="lg:col-span-2">
+                <VideoList
+                  videos={videos}
+                  onDownload={handleDownload}
+                  onRefresh={handleRefresh}
+                  isLoading={isLoadingVideos}
+                  autoRefreshActive={autoRefreshActive}
+                  onStopAutoRefresh={stopAutoRefresh}
+                />
+              </div>
+            </div>
           </div>
         ) : activeTab === 'admin' && isAdmin ? (
           <AdminDashboard />
