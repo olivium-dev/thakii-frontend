@@ -74,7 +74,7 @@ const getBackendToken = async () => {
       {},
       {
         headers: { 'Authorization': `Bearer ${firebaseToken}` },
-        timeout: 15000
+        timeout: 120000  // 2 minutes for token exchange
       }
     );
     
