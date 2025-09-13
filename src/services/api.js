@@ -4,9 +4,6 @@ import { auth } from '../config/firebase';
 // Configure the base URL via env; fallback to local backend for development
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://thakii-02.fanusdigital.site/thakii-be';
 
-// Direct server URL for large file uploads (bypasses Cloudflare 100MB limit)
-const DIRECT_SERVER_URL = 'http://192.168.2.71/thakii-be';
-
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: 300000, // 5 minutes timeout for large file uploads
