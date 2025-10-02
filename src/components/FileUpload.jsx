@@ -84,8 +84,17 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
   const openFileSelector = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (fileInputRef.current) {
+    if (fileInputRef.current && !isUploading && !selectedFile) {
       fileInputRef.current.click();
+    }
+  };
+
+  // Handle both click and touch events for better mobile support
+  const handleAreaClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!selectedFile && !isUploading) {
+      openFileSelector(e);
     }
   };
 
@@ -105,18 +114,29 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
 
       {/* Upload Area - Responsive sizing */}
       <div
-        className={`relative border-2 border-dashed rounded-lg p-4 sm:p-6 lg:p-8 text-center transition-colors duration-200 ${
+        className={`relative border-2 border-dashed rounded-lg p-4 sm:p-6 lg:p-8 text-center transition-colors duration-200 group ${
           dragActive
             ? 'border-blue-500 bg-blue-50'
             : selectedFile
             ? 'border-green-500 bg-green-50'
-            : 'border-gray-300 hover:border-gray-400'
-        } ${isUploading ? 'pointer-events-none opacity-50' : ''}`}
+            : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+        } ${isUploading ? 'pointer-events-none opacity-50' : ''} ${
+          !selectedFile && !isUploading ? 'cursor-pointer' : ''
+        }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        onClick={!selectedFile ? openFileSelector : undefined}
+        onClick={handleAreaClick}
+        onTouchEnd={handleAreaClick}
+        role="button"
+        tabIndex={!selectedFile && !isUploading ? 0 : -1}
+        onKeyDown={(e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && !selectedFile && !isUploading) {
+            handleAreaClick(e);
+          }
+        }}
+        aria-label="Click to select video file or drag and drop"
       >
         {/* Hidden file input */}
         <input
@@ -194,14 +214,15 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
             )}
           </div>
         ) : (
-          <div className="space-y-3 sm:space-y-4 cursor-pointer">
-            <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto" />
+          <div className="space-y-3 sm:space-y-4">
+            <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto transition-colors group-hover:text-blue-500" />
             <div>
-              <p className="text-base sm:text-lg font-medium text-gray-900">
+              <p className="text-base sm:text-lg font-medium text-gray-900 transition-colors group-hover:text-blue-600">
                 Drop your video file here
               </p>
-              <p className="text-sm text-gray-500 mt-1">
-                or tap to browse files
+              <p className="text-sm text-blue-600 mt-1 font-medium">
+                <span className="hidden sm:inline">or click to browse files</span>
+                <span className="sm:hidden">or tap to browse files</span>
               </p>
             </div>
             {/* Support info - More compact on mobile */}
