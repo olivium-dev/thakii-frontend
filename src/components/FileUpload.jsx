@@ -81,10 +81,8 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
     }
   };
 
-  const openFileSelector = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (fileInputRef.current) {
+  const openFileSelector = () => {
+    if (fileInputRef.current && !isUploading) {
       fileInputRef.current.click();
     }
   };
@@ -103,26 +101,25 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
         Upload Video File
       </h2>
 
-      {/* Upload Area - Responsive sizing */}
+      {/* Drag & Drop Area - No click functionality */}
       <div
         className={`relative border-2 border-dashed rounded-lg p-4 sm:p-6 lg:p-8 text-center transition-colors duration-200 ${
           dragActive
             ? 'border-blue-500 bg-blue-50'
             : selectedFile
             ? 'border-green-500 bg-green-50'
-            : 'border-gray-300 hover:border-gray-400'
+            : 'border-gray-300'
         } ${isUploading ? 'pointer-events-none opacity-50' : ''}`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        onClick={!selectedFile ? openFileSelector : undefined}
       >
         {/* Hidden file input */}
         <input
           ref={fileInputRef}
           type="file"
-          accept="video/*"
+          accept="video/mp4,video/avi,video/mov,video/wmv,video/mkv,video/*"
           onChange={handleChange}
           className="hidden"
           disabled={isUploading}
@@ -194,14 +191,14 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
             )}
           </div>
         ) : (
-          <div className="space-y-3 sm:space-y-4 cursor-pointer">
+          <div className="space-y-3 sm:space-y-4">
             <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto" />
             <div>
               <p className="text-base sm:text-lg font-medium text-gray-900">
                 Drop your video file here
               </p>
               <p className="text-sm text-gray-500 mt-1">
-                or tap to browse files
+                Drag and drop your video file in this area
               </p>
             </div>
             {/* Support info - More compact on mobile */}
@@ -215,6 +212,24 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
           </div>
         )}
       </div>
+
+      {/* Separate Browse Files Button - Outside drag & drop area */}
+      {!selectedFile && !isUploading && (
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={openFileSelector}
+            className="min-h-[44px] inline-flex items-center justify-center px-6 py-3 border border-blue-600 text-sm font-medium rounded-lg text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+          >
+            <Upload className="w-5 h-5 mr-2" />
+            <span className="hidden sm:inline">Browse Files</span>
+            <span className="sm:hidden">Browse</span>
+          </button>
+          <p className="text-xs text-gray-500 mt-2">
+            Choose a video file from your device
+          </p>
+        </div>
+      )}
     </div>
   );
 };
