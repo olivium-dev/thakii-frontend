@@ -25,20 +25,18 @@ class WebSocketService {
       return;
     }
 
-    // Socket.IO is at root domain, not /thakii-be path
-    // API routes use /thakii-be, but Socket.IO uses standard /socket.io/ path
-    const backendUrl = 'https://thakii-02.fanusdigital.site';
+    // Use dedicated WebSocket subdomain via TCP tunnel
+    const backendUrl = 'https://ws-thakii-02.fds-1.com';
     
     console.log(`🔌 Connecting to WebSocket: ${backendUrl}`);
     
     this.socket = io(backendUrl, {
-      transports: ['polling', 'websocket'],  // Try polling first due to Cloudflare Tunnel limitations
+      transports: ['websocket', 'polling'],  // WebSocket first via TCP tunnel
       reconnection: true,
       reconnectionAttempts: this.maxReconnectAttempts,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      timeout: 20000,
-      upgrade: false  // Disable WebSocket upgrade, stay with polling
+      timeout: 20000
     });
     
     // Connection event
