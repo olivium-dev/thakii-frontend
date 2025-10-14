@@ -25,13 +25,13 @@ class WebSocketService {
       return;
     }
 
-    // Use dedicated WebSocket subdomain via TCP tunnel
-    const backendUrl = 'https://ws-thakii-02.fds-1.com';
+    // Use existing HTTP tunnel - WebSocket should work through it
+    const backendUrl = 'https://thakii-02.fanusdigital.site';
     
     console.log(`🔌 Connecting to WebSocket: ${backendUrl}`);
     
     this.socket = io(backendUrl, {
-      transports: ['websocket', 'polling'],  // WebSocket first via TCP tunnel
+      transports: ['polling'],  // Use polling - provides real-time updates through Cloudflare Tunnel
       reconnection: true,
       reconnectionAttempts: this.maxReconnectAttempts,
       reconnectionDelay: 1000,
