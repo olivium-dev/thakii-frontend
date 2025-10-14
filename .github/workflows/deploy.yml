@@ -1,0 +1,121 @@
+name: Deploy Frontend to Server
+
+on:
+  push:
+    branches:
+      - main
+      - feature/websocket-updates
+  workflow_dispatch:
+
+env:
+  SERVER_HOST: 192.168.2.71
+  SERVER_USER: ec2-user
+  WEB_ROOT: /var/www/thakii-frontend
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build frontend
+        env:
+          VITE_API_BASE_URL: https://thakii-02.fanusdigital.site/thakii-be
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+        run: npm run build
+      
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+      
+      - name: Create deployment archive
+        run: |
+          cd dist
+          tar -czf ../frontend-build.tar.gz .
+          cd ..
+      
+      - name: Upload to server
+        env:
+          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          sshpass -p "$SERVER_PASSWORD" scp -o StrictHostKeyChecking=no frontend-build.tar.gz $SERVER_USER@$SERVER_HOST:/tmp/
+      
+      - name: Deploy on server
+        env:
+          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << 'EOF'
+            set -e
+            
+            echo "=== Deploying Frontend ==="
+            
+            # Create backup of current frontend
+            BACKUP_NAME="thakii-frontend-backup-$(date +%Y%m%d-%H%M%S)"
+            if [ -d "$WEB_ROOT" ]; then
+              sudo cp -r $WEB_ROOT /tmp/$BACKUP_NAME
+              echo "✅ Backup created: /tmp/$BACKUP_NAME"
+            fi
+            
+            # Create temp directory for new build
+            mkdir -p /tmp/thakii-frontend-new
+            
+            # Extract build
+            tar -xzf /tmp/frontend-build.tar.gz -C /tmp/thakii-frontend-new
+            
+            # Remove old frontend and deploy new one
+            sudo rm -rf $WEB_ROOT
+            sudo mv /tmp/thakii-frontend-new $WEB_ROOT
+            
+            # Set correct permissions
+            sudo chown -R nginx:nginx $WEB_ROOT
+            sudo chmod -R 755 $WEB_ROOT
+            
+            # Reload nginx
+            sudo systemctl reload nginx
+            
+            # Clean up
+            rm /tmp/frontend-build.tar.gz
+            
+            echo "=== Frontend deployment complete ==="
+          EOF
+      
+      - name: Verify deployment
+        env:
+          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          # Wait for deployment to settle
+          sleep 5
+          
+          # Check if site is accessible
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://thakii-02.fanusdigital.site/)
+          
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Frontend is accessible (HTTP $HTTP_CODE)"
+          else
+            echo "⚠️  Frontend returned HTTP $HTTP_CODE (might still be loading)"
+          fi
+      
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ $? -eq 0 ]; then
+            echo "✅ Deployment successful"
+          else
+            echo "❌ Deployment failed"
+          fi
+
