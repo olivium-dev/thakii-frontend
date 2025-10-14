@@ -25,8 +25,9 @@ class WebSocketService {
       return;
     }
 
-    const backendUrl = import.meta.env.VITE_API_BASE_URL || 
-                       'https://thakii-02.fanusdigital.site/thakii-be';
+    // Socket.IO is at root domain, not /thakii-be path
+    // API routes use /thakii-be, but Socket.IO uses standard /socket.io/ path
+    const backendUrl = 'https://thakii-02.fanusdigital.site';
     
     console.log(`🔌 Connecting to WebSocket: ${backendUrl}`);
     
