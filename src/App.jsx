@@ -11,6 +11,7 @@ import FirebaseLogin from './components/Auth/FirebaseLogin';
 import AdminDashboard from './components/AdminDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import { apiService } from './services/api';
+import { websocketService } from './services/websocket';
 
 function AppContent() {
   const { currentUser, isAdmin } = useAuth();
@@ -266,66 +267,42 @@ function AppContent() {
         startAutoRefresh();
       }, 2000); // Wait 2 seconds after initial load
       
-      // Set up real-time listeners
-      let unsubscribeVideos;
-      let unsubscribeHealth;
-      let unsubscribeNotifications;
+      // Connect to WebSocket for real-time updates
+      console.log('🔌 Connecting to WebSocket for real-time updates...');
+      websocketService.connect(currentUser.uid, (taskData) => {
+        console.log('📨 WebSocket task update received:', taskData);
+        
+        // Update videos state with new task data
+        setVideos(prevVideos => {
+          const index = prevVideos.findIndex(v => v.video_id === taskData.video_id || v.id === taskData.video_id);
+          if (index !== -1) {
+            // Update existing video
+            const updated = [...prevVideos];
+            updated[index] = { ...updated[index], ...taskData };
+            console.log(`✅ Updated video ${taskData.video_id} to status: ${taskData.status}`);
+            
+            // Show toast notification for status changes
+            if (taskData.status === 'completed' || taskData.status === 'done') {
+              toast.success(`Video "${taskData.filename || 'unknown'}" is ready for download!`);
+            } else if (taskData.status === 'failed') {
+              toast.error(`Video "${taskData.filename || 'unknown'}" processing failed`);
+            } else if (taskData.status === 'processing') {
+              toast.loading(`Processing video "${taskData.filename || 'unknown'}"...`);
+            }
+            
+            return updated;
+          } else {
+            // New video, add to beginning
+            console.log(`➕ Adding new video ${taskData.video_id}`);
+            return [taskData, ...prevVideos];
+          }
+        });
+      });
       
-      try {
-        // Set up real-time listener for videos based on user role - DISABLED for manual refresh only
-        // if (isAdmin) {
-        //   console.log('Setting up admin real-time listener for all videos');
-        //   unsubscribeVideos = firestoreService.subscribeToAllVideos((updatedVideos) => {
-        //     console.log(`Received ${updatedVideos.length} videos via push notification (admin)`);
-        //     setVideos(updatedVideos);
-        //     toast.success('Video list updated in real-time');
-        //   });
-        // } else {
-        //   console.log(`Setting up user real-time listener for user ${currentUser.uid}`);
-        //   unsubscribeVideos = firestoreService.subscribeToUserVideos(currentUser.uid, (updatedVideos) => {
-        //     console.log(`Received ${updatedVideos.length} videos via push notification`);
-        //     setVideos(updatedVideos);
-        //     if (updatedVideos.length > 0 && videos.length !== updatedVideos.length) {
-        //       toast.success('Video list updated in real-time');
-        //     }
-        //   });
-        // }
-        
-        // Set up real-time listener for health status - DISABLED for manual refresh only
-        // unsubscribeHealth = firestoreService.subscribeToHealthStatus((updatedHealth) => {
-        //   console.log('Received health update via push notification:', updatedHealth);
-        //   // Only apply Firestore health if it contains a definitive status
-        //   if (updatedHealth && typeof updatedHealth.status === 'string') {
-        //     setHealthStatus((prev) => ({ ...(prev || {}), ...updatedHealth }));
-        //   }
-        // });
-        
-        // Set up real-time listener for notifications - DISABLED for manual refresh only
-        // unsubscribeNotifications = notificationService.subscribeToNotifications((notification) => {
-        //   console.log('Received notification:', notification);
-        // });
-        
-        // Set up listener for system notifications - DISABLED for manual refresh only
-        // const unsubscribeSystemNotifications = notificationService.subscribeToSystemNotifications((systemData) => {
-        //   console.log('Received system notification:', systemData);
-        // });
-      } catch (error) {
-        console.error('Error setting up real-time listeners:', error);
-        toast.error('Failed to set up real-time updates');
-        
-        // Fallback to polling if real-time fails - DISABLED for manual refresh only
-        // const healthInterval = setInterval(fetchHealthStatus, 30000);
-        // const videoInterval = setInterval(fetchVideos, 10000);
-        
-        // return () => {
-        //   clearInterval(healthInterval);
-        //   clearInterval(videoInterval);
-        // };
-      }
-      
-      // Clean up auto-refresh when component unmounts or user changes
+      // Clean up WebSocket and auto-refresh when component unmounts or user changes
       return () => {
-        console.log('🧹 Cleaning up auto-refresh on unmount');
+        console.log('🧹 Cleaning up WebSocket and auto-refresh on unmount');
+        websocketService.disconnect();
         stopAutoRefresh();
       };
     }
