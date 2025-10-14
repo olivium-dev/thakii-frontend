@@ -32,12 +32,13 @@ class WebSocketService {
     console.log(`🔌 Connecting to WebSocket: ${backendUrl}`);
     
     this.socket = io(backendUrl, {
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],  // Try polling first due to Cloudflare Tunnel limitations
       reconnection: true,
       reconnectionAttempts: this.maxReconnectAttempts,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      timeout: 20000
+      timeout: 20000,
+      upgrade: false  // Disable WebSocket upgrade, stay with polling
     });
     
     // Connection event
