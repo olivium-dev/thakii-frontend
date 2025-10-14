@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  SERVER_HOST: 192.168.2.71
+  SERVER_HOST: thakii-02.fds-1.com
   SERVER_USER: ec2-user
   WEB_ROOT: /var/www/thakii-frontend
 
