@@ -99,8 +99,6 @@ jobs:
             
             echo "=== Frontend deployment complete ==="
           EOF
-        env:
-          WEB_ROOT: ${{ env.WEB_ROOT }}
       
       - name: Verify deployment
         run: |
