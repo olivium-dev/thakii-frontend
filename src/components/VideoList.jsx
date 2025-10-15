@@ -156,7 +156,7 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
             {sortedVideos.map((video) => {
               const { icon, text, color } = getStatusInfo(video.status);
               return (
-                <div key={video.id || video.video_id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                <div key={video.video_id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                   {/* Card Header */}
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1 min-w-0">
@@ -181,7 +181,7 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
                   <div className="flex justify-end">
                     {(video.status === 'done' || video.status === 'completed') ? (
                       <button
-                        onClick={() => onDownload(video.id || video.video_id)}
+                        onClick={() => onDownload(video.video_id)}
                         className="min-h-[44px] inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full justify-center"
                       >
                         <FiDownload className="mr-2 w-4 h-4" />
@@ -224,7 +224,7 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
                   {sortedVideos.map((video) => {
                     const { icon, text, color } = getStatusInfo(video.status);
                     return (
-                      <tr key={video.id || video.video_id} className="hover:bg-gray-50">
+                      <tr key={video.video_id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 text-sm font-medium text-gray-900">
                           <div className="flex items-center">
                             <FiFile className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
@@ -246,7 +246,7 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {(video.status === 'done' || video.status === 'completed') ? (
                             <button
-                              onClick={() => onDownload(video.id || video.video_id)}
+                              onClick={() => onDownload(video.video_id)}
                               className="min-h-[44px] inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                             >
                               <FiDownload className="mr-1 w-4 h-4" />
