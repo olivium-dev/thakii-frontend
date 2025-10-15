@@ -63,17 +63,18 @@ jobs:
       - name: Deploy on server
         env:
           SSH_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+          WEB_ROOT: ${{ env.WEB_ROOT }}
         run: |
-          sshpass -p "$SSH_PASSWORD" ssh thakii-server << 'EOF'
+          sshpass -p "$SSH_PASSWORD" ssh thakii-server << EOF
             set -e
             
             echo "=== Deploying Frontend ==="
             
             # Create backup of current frontend
-            BACKUP_NAME="thakii-frontend-backup-$(date +%Y%m%d-%H%M%S)"
+            BACKUP_NAME="thakii-frontend-backup-\$(date +%Y%m%d-%H%M%S)"
             if [ -d "$WEB_ROOT" ]; then
-              sudo cp -r $WEB_ROOT /tmp/$BACKUP_NAME
-              echo "✅ Backup created: /tmp/$BACKUP_NAME"
+              sudo cp -r $WEB_ROOT /tmp/\$BACKUP_NAME
+              echo "✅ Backup created: /tmp/\$BACKUP_NAME"
             fi
             
             # Create temp directory for new build
