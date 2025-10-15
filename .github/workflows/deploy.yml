@@ -40,54 +40,64 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
         run: npm run build
       
-      - name: Install sshpass
-        run: sudo apt-get update && sudo apt-get install -y sshpass
-      
       - name: Create deployment archive
         run: |
           cd dist
           tar -czf ../frontend-build.tar.gz .
           cd ..
       
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v3
+      - name: Setup SSH Connection via Cloudflare
+        uses: ./.github/actions/cloudflare-ssh
         with:
-          name: frontend-build
-          path: frontend-build.tar.gz
-          retention-days: 1
+          ssh-private-key: ${{ secrets.THAKII_SSH_PRIVATE_KEY }}
+          server-hostname: ${{ env.SERVER_HOST }}
+          server-user: ${{ env.SERVER_USER }}
+          host-alias: 'thakii-server'
       
-      - name: Deploy via webhook
-        env:
-          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+      - name: Upload to server
         run: |
-          # Deploy frontend via webhook with artifact URL
-          echo "=== Deploying Frontend via Webhook ==="
-          
-          # Get the artifact download URL
-          ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts"
-          
-          RESPONSE=$(curl -s -w "%{http_code}" -X POST \
-            -H "Authorization: Bearer $WEBHOOK_SECRET" \
-            -H "Content-Type: application/json" \
-            -d "{\"build_url\": \"artifact\", \"artifact_url\": \"$ARTIFACT_URL\", \"run_id\": \"${{ github.run_id }}\"}" \
-            https://thakii-02.fanusdigital.site/webhook/deploy/frontend)
-          
-          HTTP_CODE="${RESPONSE: -3}"
-          BODY="${RESPONSE%???}"
-          
-          echo "HTTP Status: $HTTP_CODE"
-          echo "Response: $BODY"
-          
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "✅ Frontend deployment successful"
-          else
-            echo "❌ Frontend deployment failed"
-            exit 1
-          fi
+          scp frontend-build.tar.gz thakii-server:/tmp/
+      
+      - name: Deploy on server
+        run: |
+          ssh thakii-server << 'EOF'
+            set -e
+            
+            echo "=== Deploying Frontend ==="
+            
+            # Create backup of current frontend
+            BACKUP_NAME="thakii-frontend-backup-$(date +%Y%m%d-%H%M%S)"
+            if [ -d "$WEB_ROOT" ]; then
+              sudo cp -r $WEB_ROOT /tmp/$BACKUP_NAME
+              echo "✅ Backup created: /tmp/$BACKUP_NAME"
+            fi
+            
+            # Create temp directory for new build
+            mkdir -p /tmp/thakii-frontend-new
+            
+            # Extract build
+            tar -xzf /tmp/frontend-build.tar.gz -C /tmp/thakii-frontend-new
+            
+            # Remove old frontend and deploy new one
+            sudo rm -rf $WEB_ROOT
+            sudo mv /tmp/thakii-frontend-new $WEB_ROOT
+            
+            # Set correct permissions
+            sudo chown -R www-data:www-data $WEB_ROOT
+            sudo chmod -R 755 $WEB_ROOT
+            
+            # Reload nginx
+            sudo systemctl reload nginx
+            
+            # Clean up
+            rm /tmp/frontend-build.tar.gz
+            
+            echo "=== Frontend deployment complete ==="
+          EOF
+        env:
+          WEB_ROOT: ${{ env.WEB_ROOT }}
       
       - name: Verify deployment
-        env:
-          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
         run: |
           # Wait for deployment to settle
           sleep 5
@@ -98,7 +108,8 @@ jobs:
           if [ "$HTTP_CODE" -eq 200 ]; then
             echo "✅ Frontend is accessible (HTTP $HTTP_CODE)"
           else
-            echo "⚠️  Frontend returned HTTP $HTTP_CODE (might still be loading)"
+            echo "⚠️  Frontend returned HTTP $HTTP_CODE"
+            exit 1
           fi
       
       - name: Notify deployment status
@@ -109,4 +120,3 @@ jobs:
           else
             echo "❌ Deployment failed"
           fi
-
