@@ -50,24 +50,26 @@ jobs:
           cd ..
       
       - name: Upload build artifact
-        run: |
-          # Upload build artifact to GitHub (will be downloaded by webhook)
-          echo "Build artifact created: frontend-build.tar.gz"
-          ls -la frontend-build.tar.gz
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: frontend-build.tar.gz
+          retention-days: 1
       
       - name: Deploy via webhook
         env:
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
         run: |
-          # Deploy frontend via webhook
+          # Deploy frontend via webhook with artifact URL
           echo "=== Deploying Frontend via Webhook ==="
           
-          # For now, we'll use a simple approach without file upload
-          # The webhook will pull from git directly
+          # Get the artifact download URL
+          ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts"
+          
           RESPONSE=$(curl -s -w "%{http_code}" -X POST \
             -H "Authorization: Bearer $WEBHOOK_SECRET" \
             -H "Content-Type: application/json" \
-            -d '{"build_url": "git"}' \
+            -d "{\"build_url\": \"artifact\", \"artifact_url\": \"$ARTIFACT_URL\", \"run_id\": \"${{ github.run_id }}\"}" \
             https://thakii-02.fanusdigital.site/webhook/deploy/frontend)
           
           HTTP_CODE="${RESPONSE: -3}"
