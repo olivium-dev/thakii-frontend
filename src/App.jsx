@@ -130,10 +130,25 @@ function AppContent() {
       toast.success('Video uploaded successfully!');
       console.log('Upload result:', result);
 
-      // Refresh video list after successful upload
+      // CRITICAL FIX: Immediately add the video to local state with the backend-returned video_id
+      // This prevents UUID mismatch issues where frontend would show wrong video_id
+      if (result && result.video_id) {
+        const newVideo = {
+          video_id: result.video_id,
+          filename: file.name,
+          status: 'in_queue',
+          upload_date: new Date().toISOString(),
+          created_at: new Date().toISOString()
+        };
+        
+        console.log('✅ Adding uploaded video to local state:', newVideo);
+        setVideos(prevVideos => [newVideo, ...prevVideos]);
+      }
+
+      // Also refresh video list after a short delay to get full backend data
       setTimeout(() => {
         fetchVideos();
-      }, 1000);
+      }, 2000);
 
     } catch (error) {
       console.error('Upload failed:', error);
@@ -272,28 +287,44 @@ function AppContent() {
       websocketService.connect(currentUser.uid, (taskData) => {
         console.log('📨 WebSocket task update received:', taskData);
         
+        // CRITICAL FIX: Use video_id as the ONLY identifier (no fallback to 'id')
+        // This prevents mismatched IDs from creating duplicate entries
+        if (!taskData.video_id) {
+          console.warn('⚠️  WebSocket update missing video_id, ignoring:', taskData);
+          return;
+        }
+        
         // Update videos state with new task data
         setVideos(prevVideos => {
-          const index = prevVideos.findIndex(v => v.video_id === taskData.video_id || v.id === taskData.video_id);
+          const index = prevVideos.findIndex(v => v.video_id === taskData.video_id);
+          
           if (index !== -1) {
-            // Update existing video
+            // Update existing video - merge task data with existing data
             const updated = [...prevVideos];
-            updated[index] = { ...updated[index], ...taskData };
+            updated[index] = { 
+              ...updated[index], 
+              ...taskData,
+              // Ensure video_id stays consistent
+              video_id: updated[index].video_id 
+            };
             console.log(`✅ Updated video ${taskData.video_id} to status: ${taskData.status}`);
             
-            // Show toast notification for status changes
-            if (taskData.status === 'completed' || taskData.status === 'done') {
-              toast.success(`Video "${taskData.filename || 'unknown'}" is ready for download!`);
-            } else if (taskData.status === 'failed') {
-              toast.error(`Video "${taskData.filename || 'unknown'}" processing failed`);
-            } else if (taskData.status === 'processing') {
-              toast.loading(`Processing video "${taskData.filename || 'unknown'}"...`);
+            // Show toast notification for status changes (only once per status)
+            const oldStatus = prevVideos[index].status;
+            if (oldStatus !== taskData.status) {
+              if (taskData.status === 'completed' || taskData.status === 'done') {
+                toast.success(`Video "${taskData.filename || 'unknown'}" is ready for download!`);
+              } else if (taskData.status === 'failed') {
+                toast.error(`Video "${taskData.filename || 'unknown'}" processing failed`);
+              } else if (taskData.status === 'processing') {
+                toast.info(`Processing video "${taskData.filename || 'unknown'}"...`);
+              }
             }
             
             return updated;
           } else {
-            // New video, add to beginning
-            console.log(`➕ Adding new video ${taskData.video_id}`);
+            // New video not in local state yet - add it
+            console.log(`➕ Adding new video ${taskData.video_id} from WebSocket`);
             return [taskData, ...prevVideos];
           }
         });
