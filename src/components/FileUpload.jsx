@@ -205,8 +205,8 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
             <div className="flex items-center justify-center space-x-1 text-xs text-gray-400 px-2">
               <AlertCircle className="w-3 h-3 flex-shrink-0" />
               <span className="text-center">
-                <span className="hidden sm:inline">Supports MP4, AVI, MOV, WMV, MKV (max 2GB)</span>
-                <span className="sm:hidden">MP4, AVI, MOV, WMV, MKV (max 2GB)</span>
+                <span className="hidden sm:inline">Supports MP4, AVI, MOV, WMV, MKV, TS (max 2GB)</span>
+                <span className="sm:hidden">MP4, AVI, MOV, WMV, MKV, TS (max 2GB)</span>
               </span>
             </div>
           </div>

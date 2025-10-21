@@ -8,7 +8,7 @@ This document describes the data flow, dependencies, and interfaces for the Thak
 **Source**: End users through web browser
 **Format**: UI events, form submissions, file selections
 **Examples**:
-- Video file uploads (MP4, AVI, MOV, WMV, MKV up to 2GB)
+- Video file uploads (MP4, AVI, MOV, WMV, MKV, TS up to 2GB)
 - Authentication credentials (email/password)
 - Admin actions (user management, server configuration)
 - UI interactions (clicks, form submissions, navigation)

@@ -117,7 +117,7 @@ The web interface communicates with the backend service through the following en
 ## Features in Detail
 
 ### File Upload
-- Supports multiple video formats (MP4, AVI, MOV, WMV, MKV)
+- Supports multiple video formats (MP4, AVI, MOV, WMV, MKV, TS)
 - Maximum file size: 2GB
 - Real-time upload progress
 - Drag and drop interface
