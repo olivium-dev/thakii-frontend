@@ -36,9 +36,9 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
 
   const handleFile = (file) => {
     // Validate file type
-    const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/mkv'];
+    const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/mkv', 'video/mp2t'];
     if (!allowedTypes.includes(file.type)) {
-      toast.error('Please select a valid video file (MP4, AVI, MOV, WMV, MKV)');
+      toast.error('Please select a valid video file (MP4, AVI, MOV, WMV, MKV, TS)');
       return;
     }
 
@@ -119,7 +119,7 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
         <input
           ref={fileInputRef}
           type="file"
-          accept="video/mp4,video/avi,video/mov,video/wmv,video/mkv,video/*"
+          accept="video/mp4,video/avi,video/mov,video/wmv,video/mkv,video/mp2t,.ts,video/*"
           onChange={handleChange}
           className="hidden"
           disabled={isUploading}
