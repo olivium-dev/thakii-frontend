@@ -14,6 +14,12 @@ inputs:
   host-alias:
     description: 'SSH host alias to use in commands'
     required: true
+  cf-service-token-id:
+    description: 'Cloudflare service token ID'
+    required: true
+  cf-service-token-secret:
+    description: 'Cloudflare service token secret'
+    required: true
 
 runs:
   using: 'composite'
@@ -43,18 +49,18 @@ runs:
         echo "✅ SSH key configured"
       shell: bash
     
-    - name: Configure SSH with cloudflared
+    - name: Configure SSH with cloudflared service token
       run: |
-        echo "⚙️  Configuring SSH for Cloudflare tunnel..."
+        echo "⚙️  Configuring SSH for Cloudflare tunnel with service token..."
         
-        # The tunnel now uses tcp:// protocol, so we use cloudflared access tcp
-        # Force IPv4 with --edge-ip-version 4
+        # Use cloudflared access tcp with service token authentication
+        # This bypasses IPv6 DNS issues by using service token auth
         cat >> ~/.ssh/config << 'EOF'
         Host ${{ inputs.host-alias }}
           HostName ${{ inputs.server-hostname }}
           User ${{ inputs.server-user }}
           IdentityFile ~/.ssh/id_rsa
-          ProxyCommand env CLOUDFLARED_IPV4_ONLY=1 cloudflared access ssh --hostname %h
+          ProxyCommand cloudflared access tcp --hostname %h --url tcp://127.0.0.1:%p --service-token-id ${{ inputs.cf-service-token-id }} --service-token-secret ${{ inputs.cf-service-token-secret }}
           StrictHostKeyChecking no
           UserKnownHostsFile /dev/null
           ServerAliveInterval 30

@@ -53,6 +53,8 @@ jobs:
           server-hostname: ${{ env.SERVER_HOST }}
           server-user: ${{ env.SERVER_USER }}
           host-alias: 'thakii-server'
+          cf-service-token-id: ${{ secrets.CF_SERVICE_TOKEN_ID }}
+          cf-service-token-secret: ${{ secrets.CF_SERVICE_TOKEN_SECRET }}
       
       - name: Upload to server
         run: |
