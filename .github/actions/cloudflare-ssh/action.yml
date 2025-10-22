@@ -60,7 +60,7 @@ runs:
           HostName ${{ inputs.server-hostname }}
           User ${{ inputs.server-user }}
           IdentityFile ~/.ssh/id_rsa
-          ProxyCommand cloudflared access tcp --hostname %h --url tcp://127.0.0.1:%p --service-token-id ${{ inputs.cf-service-token-id }} --service-token-secret ${{ inputs.cf-service-token-secret }}
+          ProxyCommand cloudflared access tcp --hostname %h --url tcp://127.0.0.1:2222 --service-token-id ${{ inputs.cf-service-token-id }} --service-token-secret ${{ inputs.cf-service-token-secret }}
           StrictHostKeyChecking no
           UserKnownHostsFile /dev/null
           ServerAliveInterval 30
