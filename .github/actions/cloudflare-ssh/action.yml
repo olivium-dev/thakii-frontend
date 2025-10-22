@@ -47,14 +47,14 @@ runs:
       run: |
         echo "⚙️  Configuring SSH for Cloudflare tunnel..."
         
-        # The tunnel uses ssh:// protocol, so we use cloudflared access ssh (not tcp)
+        # The tunnel now uses tcp:// protocol, so we use cloudflared access tcp
         # Force IPv4 with --edge-ip-version 4
         cat >> ~/.ssh/config << 'EOF'
         Host ${{ inputs.host-alias }}
           HostName ${{ inputs.server-hostname }}
           User ${{ inputs.server-user }}
           IdentityFile ~/.ssh/id_rsa
-          ProxyCommand cloudflared access ssh --hostname %h --edge-ip-version 4
+          ProxyCommand cloudflared access tcp --hostname %h --edge-ip-version 4
           StrictHostKeyChecking no
           UserKnownHostsFile /dev/null
           ServerAliveInterval 30
