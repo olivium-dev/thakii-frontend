@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  SERVER_HOST: 192.168.2.71
+  SERVER_HOST: thakii-02.fds-1.com
   SERVER_USER: ec2-user
   WEB_ROOT: /var/www/thakii-frontend
 
@@ -49,23 +49,20 @@ jobs:
       - name: Setup SSH Connection via Cloudflare
         uses: ./.github/actions/cloudflare-ssh
         with:
-          ssh-password: ${{ secrets.SERVER_PASSWORD }}
+          ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
           server-hostname: ${{ env.SERVER_HOST }}
           server-user: ${{ env.SERVER_USER }}
           host-alias: 'thakii-server'
       
       - name: Upload to server
-        env:
-          SSH_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
         run: |
-          sshpass -p "$SSH_PASSWORD" scp frontend-build.tar.gz thakii-server:/tmp/
+          scp frontend-build.tar.gz thakii-server:/tmp/
       
       - name: Deploy on server
         env:
-          SSH_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
           WEB_ROOT: ${{ env.WEB_ROOT }}
         run: |
-          sshpass -p "$SSH_PASSWORD" ssh thakii-server << EOF
+          ssh thakii-server << EOF
             set -e
             
             echo "=== Deploying Frontend ==="
