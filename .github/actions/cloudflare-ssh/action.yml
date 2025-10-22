@@ -54,7 +54,7 @@ runs:
           HostName ${{ inputs.server-hostname }}
           User ${{ inputs.server-user }}
           IdentityFile ~/.ssh/id_rsa
-          ProxyCommand cloudflared access ssh --hostname %h
+          ProxyCommand env CLOUDFLARED_IPV4_ONLY=1 cloudflared access ssh --hostname %h
           StrictHostKeyChecking no
           UserKnownHostsFile /dev/null
           ServerAliveInterval 30
