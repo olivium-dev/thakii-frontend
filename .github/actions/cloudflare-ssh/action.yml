@@ -18,13 +18,16 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Install cloudflared
+    - name: Disable IPv6 and Install cloudflared
       run: |
+        echo "🔧 Disabling IPv6..."
+        sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+        sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
         echo "📥 Installing cloudflared..."
         wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
         sudo dpkg -i cloudflared-linux-amd64.deb
         cloudflared --version
-        echo "✅ cloudflared installed"
+        echo "✅ cloudflared installed with IPv6 disabled"
       shell: bash
     
     - name: Setup SSH Key
@@ -45,12 +48,13 @@ runs:
         echo "⚙️  Configuring SSH for Cloudflare tunnel..."
         
         # The tunnel uses ssh:// protocol, so we use cloudflared access ssh (not tcp)
+        # Force IPv4 with --edge-ip-version 4
         cat >> ~/.ssh/config << 'EOF'
         Host ${{ inputs.host-alias }}
           HostName ${{ inputs.server-hostname }}
           User ${{ inputs.server-user }}
           IdentityFile ~/.ssh/id_rsa
-          ProxyCommand cloudflared access ssh --hostname %h
+          ProxyCommand cloudflared access ssh --hostname %h --edge-ip-version 4
           StrictHostKeyChecking no
           UserKnownHostsFile /dev/null
           ServerAliveInterval 30
