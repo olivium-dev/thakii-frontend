@@ -54,7 +54,7 @@ runs:
           HostName ${{ inputs.server-hostname }}
           User ${{ inputs.server-user }}
           IdentityFile ~/.ssh/id_rsa
-          ProxyCommand cloudflared access tcp --hostname ${{ inputs.server-hostname }}
+          ProxyCommand cloudflared access tcp --hostname ${{ inputs.server-hostname }} --edge-ip-version 4
           StrictHostKeyChecking no
           UserKnownHostsFile /dev/null
           ServerAliveInterval 30
