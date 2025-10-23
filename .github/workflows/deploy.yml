@@ -108,27 +108,27 @@ jobs:
             
             echo "=== Frontend deployment complete ==="
           EOF
-      
-      - name: Verify deployment
-        run: |
-          # Wait for deployment to settle
-          sleep 5
-          
-          # Check if site is accessible
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://thakii-02.fanusdigital.site/)
-          
-          if [ "$HTTP_CODE" -eq 200 ]; then
-            echo "✅ Frontend is accessible (HTTP $HTTP_CODE)"
-          else
-            echo "⚠️  Frontend returned HTTP $HTTP_CODE"
-            exit 1
-          fi
-      
-      - name: Notify deployment status
-        if: always()
-        run: |
-          if [ $? -eq 0 ]; then
-            echo "✅ Deployment successful"
-          else
-            echo "❌ Deployment failed"
-          fi
+    
+    - name: Verify deployment
+      run: |
+        # Wait for deployment to settle
+        sleep 5
+        
+        # Check if site is accessible
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://thakii-02.fanusdigital.site/)
+        
+        if [ "$HTTP_CODE" -eq 200 ]; then
+          echo "✅ Frontend is accessible (HTTP $HTTP_CODE)"
+        else
+          echo "⚠️  Frontend returned HTTP $HTTP_CODE"
+          exit 1
+        fi
+    
+    - name: Notify deployment status
+      if: always()
+      run: |
+        if [ $? -eq 0 ]; then
+          echo "✅ Deployment successful"
+        else
+          echo "❌ Deployment failed"
+        fi
