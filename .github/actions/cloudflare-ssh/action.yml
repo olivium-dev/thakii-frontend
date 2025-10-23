@@ -32,7 +32,7 @@ runs:
         
         # Force IPv4-only DNS resolution by adding to /etc/hosts
         echo "Forcing IPv4 DNS for Cloudflare tunnel..."
-        TUNNEL_ENDPOINT=$(dig +short ${{ inputs.server-hostname }} | grep -i cfargotunnel | head -1 | tr -d '.')
+        TUNNEL_ENDPOINT=$(dig +short ${{ inputs.server-hostname }} | grep -i cfargotunnel | head -1)
         # Remove trailing dot if present
         TUNNEL_ENDPOINT=$(echo "$TUNNEL_ENDPOINT" | sed 's/\.$//')
         echo "Tunnel endpoint: $TUNNEL_ENDPOINT"
