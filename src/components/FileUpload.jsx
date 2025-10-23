@@ -37,7 +37,19 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
   const handleFile = (file) => {
     // Validate file type
     const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/mkv', 'video/mp2t'];
-    if (!allowedTypes.includes(file.type)) {
+    const allowedExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.mkv', '.ts'];
+    
+    // Check MIME type first, then fallback to file extension for .ts files
+    const isValidMimeType = allowedTypes.includes(file.type);
+    const isValidExtension = allowedExtensions.some(ext => 
+      file.name.toLowerCase().endsWith(ext.toLowerCase())
+    );
+    
+    // Special case for .ts files that might be detected as application/octet-stream
+    const isTsFile = file.name.toLowerCase().endsWith('.ts');
+    const isTsWithWrongMime = isTsFile && (file.type === 'application/octet-stream' || file.type === '');
+    
+    if (!isValidMimeType && !isTsWithWrongMime) {
       toast.error('Please select a valid video file (MP4, AVI, MOV, WMV, MKV, TS)');
       return;
     }
