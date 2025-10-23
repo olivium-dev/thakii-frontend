@@ -52,11 +52,21 @@ runs:
     - name: Configure SSH
       run: |
         echo "⚙️  Configuring SSH for Cloudflare tunnel..."
-        cat >> ~/.ssh/config << 'EOF'
+        
+        # Build ProxyCommand with optional service tokens
+        if [ -n "${{ inputs.cloudflare-service-token-id }}" ]; then
+          PROXY_CMD="cloudflared access tcp --hostname ${{ inputs.server-hostname }} --service-token-id ${{ inputs.cloudflare-service-token-id }} --service-token-secret ${{ inputs.cloudflare-service-token-secret }}"
+          echo "Using service token authentication"
+        else
+          PROXY_CMD="cloudflared access tcp --hostname ${{ inputs.server-hostname }}"
+          echo "Using bypass policy (no service token)"
+        fi
+        
+        cat >> ~/.ssh/config << EOF
         Host ${{ inputs.host-alias }}
           HostName ${{ inputs.server-hostname }}
           User ${{ inputs.server-user }}
-          ProxyCommand cloudflared access tcp --hostname ${{ inputs.server-hostname }}
+          ProxyCommand $PROXY_CMD
           IdentityFile ~/.ssh/id_rsa
           StrictHostKeyChecking no
           UserKnownHostsFile /dev/null
