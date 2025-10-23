@@ -251,3 +251,4 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
 
 export default FileUpload;
 // Force rebuild Thu Oct 23 03:34:22 CEST 2025
+/* Fix for .ts files - Thu Oct 23 12:17:31 CEST 2025 */
