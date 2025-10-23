@@ -396,18 +396,19 @@ export const apiService = {
         const link = document.createElement('a');
         link.href = response.data.download_url;
         
-        // Use passed filename (from video list) or fallback to backend filename
-        // Explicit parameter usage to prevent build optimization
-        const passedFilename = originalFilename;
-        const backendFilename = response.data.filename;
-        const originalName = passedFilename || backendFilename || videoId;
-        const pdfName = originalName.replace(/\.[^/.]+$/, '') + '.pdf';
+        // SIMPLE FIX: Backend IS sending correct filename, just use it!
+        const backendFilename = response.data.filename || videoId;
+        const pdfName = backendFilename.replace(/\.[^/.]+$/, '') + '.pdf';
         
         console.log('📁 FILENAME PROCESSING:');
-        console.log('   Passed filename from video list:', originalFilename);
         console.log('   Backend filename:', response.data.filename);
-        console.log('   Final original name used:', originalName);
         console.log('   Final PDF name:', pdfName);
+        console.log('   ✅ Using backend filename directly (it has the correct name!)');
+        
+        // Show what we would have used from video list
+        if (originalFilename) {
+          console.log('   Video list filename (for reference):', originalFilename);
+        }
         
         link.download = pdfName;
         
