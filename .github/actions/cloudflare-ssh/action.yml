@@ -24,16 +24,13 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Disable IPv6 and Install cloudflared
+    - name: Install cloudflared
       run: |
-        echo "🔧 Disabling IPv6 for cloudflared connectivity..."
-        sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
-        sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
         echo "📥 Installing cloudflared..."
         wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
         sudo dpkg -i cloudflared-linux-amd64.deb
-        cloudflared --version
-        echo "✅ cloudflared installed with IPv6 disabled"
+        cloudflared version
+        echo "✅ cloudflared installed"
       shell: bash
     
     - name: Setup SSH Key
@@ -55,14 +52,14 @@ runs:
           User ${{ inputs.server-user }}
           ProxyCommand cloudflared access tcp --hostname ${{ inputs.server-hostname }}
           IdentityFile ~/.ssh/id_rsa
+          ConnectTimeout 10
+          ServerAliveInterval 60
+          ServerAliveCountMax 3
           StrictHostKeyChecking no
           UserKnownHostsFile /dev/null
-          ServerAliveInterval 30
-          ServerAliveCountMax 3
-          ConnectTimeout 10
-          AddressFamily inet
         EOF
-        echo "✅ SSH config created"
+        chmod 600 ~/.ssh/config
+        echo "✅ SSH configuration created"
         echo ""
         echo "📋 SSH configuration:"
         cat ~/.ssh/config
@@ -73,7 +70,7 @@ runs:
         echo "🔍 Testing SSH connection (10 second timeout)..."
         echo "Command: ls -la /"
         echo ""
-        if timeout 10s ssh -o ConnectTimeout=10 ${{ inputs.host-alias }} "ls -la /"; then
+        if timeout 10s ssh -v ${{ inputs.host-alias }} "ls -la /" 2>&1; then
           echo ""
           echo "🎉 SSH tunnel is working!"
         else
