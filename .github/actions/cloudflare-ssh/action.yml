@@ -29,33 +29,11 @@ runs:
         echo "🔧 Disabling IPv6 for cloudflared connectivity..."
         sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
         sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
-        
-        # Force IPv4-only DNS resolution by adding to /etc/hosts
-        echo "Forcing IPv4 DNS for Cloudflare tunnel..."
-        TUNNEL_ENDPOINT=$(dig +short ${{ inputs.server-hostname }} | grep -i cfargotunnel | head -1)
-        # Remove trailing dot if present
-        TUNNEL_ENDPOINT=$(echo "$TUNNEL_ENDPOINT" | sed 's/\.$//')
-        echo "Tunnel endpoint: $TUNNEL_ENDPOINT"
-        
-        if [ -n "$TUNNEL_ENDPOINT" ]; then
-          TUNNEL_IPV4=$(dig +short A $TUNNEL_ENDPOINT | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
-          echo "Tunnel IPv4: $TUNNEL_IPV4"
-          
-          if [ -n "$TUNNEL_IPV4" ]; then
-            echo "$TUNNEL_IPV4 $TUNNEL_ENDPOINT" | sudo tee -a /etc/hosts
-            echo "✅ Added to /etc/hosts: $TUNNEL_ENDPOINT → $TUNNEL_IPV4"
-          else
-            echo "⚠️  Could not resolve IPv4 for $TUNNEL_ENDPOINT"
-          fi
-        else
-          echo "⚠️  Could not find tunnel endpoint for ${{ inputs.server-hostname }}"
-        fi
-        
         echo "📥 Installing cloudflared..."
         wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
         sudo dpkg -i cloudflared-linux-amd64.deb
         cloudflared --version
-        echo "✅ cloudflared installed with IPv6 disabled and IPv4 DNS forced"
+        echo "✅ cloudflared installed with IPv6 disabled"
       shell: bash
     
     - name: Setup SSH Key
@@ -63,38 +41,25 @@ runs:
         echo "🔑 Setting up SSH private key..."
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
-        
-        # Save the SSH private key
         echo "${{ inputs.ssh-private-key }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        
         echo "✅ SSH key configured"
       shell: bash
     
     - name: Configure SSH
       run: |
         echo "⚙️  Configuring SSH for Cloudflare tunnel..."
-        
-        # Build ProxyCommand with optional service tokens
-        if [ -n "${{ inputs.cloudflare-service-token-id }}" ]; then
-          PROXY_CMD="cloudflared access tcp --hostname ${{ inputs.server-hostname }} --service-token-id ${{ inputs.cloudflare-service-token-id }} --service-token-secret ${{ inputs.cloudflare-service-token-secret }}"
-          echo "Using service token authentication"
-        else
-          PROXY_CMD="cloudflared access tcp --hostname ${{ inputs.server-hostname }}"
-          echo "Using bypass policy (no service token)"
-        fi
-        
-        cat >> ~/.ssh/config << EOF
+        cat >> ~/.ssh/config << 'EOF'
         Host ${{ inputs.host-alias }}
           HostName ${{ inputs.server-hostname }}
           User ${{ inputs.server-user }}
-          ProxyCommand $PROXY_CMD
+          ProxyCommand cloudflared access tcp --hostname ${{ inputs.server-hostname }}
           IdentityFile ~/.ssh/id_rsa
           StrictHostKeyChecking no
           UserKnownHostsFile /dev/null
           ServerAliveInterval 30
           ServerAliveCountMax 3
-          ConnectTimeout 30
+          ConnectTimeout 10
           AddressFamily inet
         EOF
         echo "✅ SSH config created"
