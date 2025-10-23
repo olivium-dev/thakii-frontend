@@ -24,9 +24,7 @@ function AppContent() {
   
   // Auto-refresh state
   const [autoRefreshActive, setAutoRefreshActive] = useState(false);
-  const [showRefreshModal, setShowRefreshModal] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState(null);
-  const [refreshTimeout, setRefreshTimeout] = useState(null);
 
   // Fetch health status directly from API (authoritative)
   const fetchHealthStatus = async () => {
@@ -172,7 +170,7 @@ function AppContent() {
     }
   };
 
-  // Start auto-refresh system
+  // Start auto-refresh system (simplified - no modal)
   const startAutoRefresh = () => {
     console.log('🔄 === STARTING AUTO-REFRESH SYSTEM ===');
     console.log('   Current auto-refresh state:', autoRefreshActive);
@@ -183,44 +181,24 @@ function AppContent() {
     console.log('✅ Setting auto-refresh active to true...');
     setAutoRefreshActive(true);
     
-    // Set up 30-second interval
+    // Set up 30-second interval for continuous refresh
     console.log('⏰ Setting up 30-second interval...');
     const interval = setInterval(() => {
       console.log('🔄 === AUTO-REFRESH TRIGGERED ===');
       console.log('   Time:', new Date().toLocaleTimeString());
-      console.log('   Modal visible:', showRefreshModal);
-      
-      // CRITICAL: Don't refresh if modal is showing
-      if (showRefreshModal) {
-        console.log('🛑 SKIPPING refresh - modal is visible');
-        return;
-      }
       
       fetchVideos();
-    }, 30000); // Changed to 30 seconds
+    }, 30000); // 30 seconds
     setRefreshInterval(interval);
     console.log('✅ Interval set with ID:', interval);
     
-    // Set up 2-minute timeout for modal
-    console.log('⏰ Setting up 2-minute timeout for modal...');
-    const timeout = setTimeout(() => {
-      console.log('⏰ === 2 MINUTES ELAPSED ===');
-      console.log('   Stopping auto-refresh BEFORE showing modal...');
-      stopAutoRefresh();
-      console.log('   Now showing refresh modal...');
-      setShowRefreshModal(true);
-    }, 120000); // 2 minutes
-    setRefreshTimeout(timeout);
-    console.log('✅ Timeout set with ID:', timeout);
-    
-    console.log('🎉 Auto-refresh system fully initialized!');
+    console.log('🎉 Auto-refresh system initialized (no modal timeout)');
   };
   
   // Stop auto-refresh system
   const stopAutoRefresh = () => {
     console.log('⏹️ === STOPPING AUTO-REFRESH SYSTEM ===');
     console.log('   Current interval ID:', refreshInterval);
-    console.log('   Current timeout ID:', refreshTimeout);
     
     setAutoRefreshActive(false);
     console.log('✅ Auto-refresh active set to false');
@@ -230,13 +208,6 @@ function AppContent() {
       clearInterval(refreshInterval);
       setRefreshInterval(null);
       console.log('✅ Interval cleared and nullified');
-    }
-    
-    if (refreshTimeout) {
-      console.log('🛑 Clearing timeout:', refreshTimeout);
-      clearTimeout(refreshTimeout);
-      setRefreshTimeout(null);
-      console.log('✅ Timeout cleared and nullified');
     }
     
     console.log('🎯 Auto-refresh system completely stopped');
@@ -253,19 +224,6 @@ function AppContent() {
     }
   };
   
-  // Handle modal continue
-  const handleModalContinue = () => {
-    console.log('✅ User chose to continue auto-refresh');
-    setShowRefreshModal(false);
-    startAutoRefresh(); // Restart auto-refresh
-  };
-  
-  // Handle modal dismiss
-  const handleModalDismiss = () => {
-    console.log('❌ User dismissed auto-refresh modal');
-    setShowRefreshModal(false);
-    // Don't restart auto-refresh until manual refresh
-  };
 
   // Initial data fetch and real-time updates setup - DISABLED for manual refresh only
   useEffect(() => {
@@ -347,47 +305,6 @@ function AppContent() {
   //   return () => clearInterval(intervalId);
   // }, []);
 
-  // Auto-refresh modal component - Mobile optimized
-  const RefreshModal = () => (
-    showRefreshModal && (
-      <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-4">
-        <div className="flex items-center justify-center min-h-full">
-          <div className="relative w-full max-w-md mx-auto bg-white rounded-lg shadow-xl">
-            <div className="p-6">
-              <div className="text-center">
-                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
-                  <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                  Continue Auto-Refresh?
-                </h3>
-                <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                  The video list has been auto-refreshing for 2 minutes. Would you like to continue 
-                  automatic updates or switch to manual refresh?
-                </p>
-                <div className="space-y-3">
-                  <button
-                    onClick={handleModalContinue}
-                    className="min-h-[44px] w-full px-4 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                  >
-                    Continue Auto-Refresh
-                  </button>
-                  <button
-                    onClick={handleModalDismiss}
-                    className="min-h-[44px] w-full px-4 py-3 bg-gray-200 text-gray-800 text-sm font-medium rounded-lg shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
-                  >
-                    Switch to Manual
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  );
 
   // Show auth page if user is not logged in
   if (!currentUser) {
@@ -445,8 +362,6 @@ function AppContent() {
         )}
       </main>
 
-      {/* Auto-refresh modal */}
-      <RefreshModal />
 
       {/* Toast Notifications */}
       <Toaster

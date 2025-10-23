@@ -23,6 +23,7 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [backendToken, setBackendToken] = useState(null);
+  const [logoutTimer, setLogoutTimer] = useState(null);
 
   // Check if user is admin
   const isAdmin = (email) => {
@@ -137,12 +138,36 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
+      // Clear the logout timer
+      if (logoutTimer) {
+        clearTimeout(logoutTimer);
+        setLogoutTimer(null);
+        console.log('🕐 Logout timer cleared');
+      }
+      
       clearBackendToken();
       await signOut(auth);
       console.log('✅ Logout successful');
     } catch (error) {
       console.error('❌ Logout error:', error);
     }
+  };
+
+  // Start automatic logout timer (2 hours)
+  const startLogoutTimer = () => {
+    // Clear any existing timer
+    if (logoutTimer) {
+      clearTimeout(logoutTimer);
+    }
+
+    console.log('🕐 Starting 2-hour logout timer...');
+    const timer = setTimeout(() => {
+      console.log('⏰ 2 hours elapsed - automatically logging out user');
+      logout();
+    }, 2 * 60 * 60 * 1000); // 2 hours in milliseconds
+
+    setLogoutTimer(timer);
+    console.log('✅ Logout timer set for 2 hours');
   };
 
   // Listen for authentication state changes
@@ -169,6 +194,9 @@ export function AuthProvider({ children }) {
           
           setCurrentUser(userData);
           console.log('✅ User authenticated:', userData.email, userData.isAdmin ? '(Admin)' : '(User)');
+          
+          // Start 2-hour logout timer
+          startLogoutTimer();
           
           // Exchange Firebase token for backend token (don't await to prevent blocking)
           exchangeTokenWithBackend(user).catch(error => {
