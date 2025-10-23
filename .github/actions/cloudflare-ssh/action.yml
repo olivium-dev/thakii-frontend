@@ -32,11 +32,13 @@ runs:
         
         # Force IPv4-only DNS resolution by adding to /etc/hosts
         echo "Forcing IPv4 DNS for Cloudflare tunnel..."
-        TUNNEL_ENDPOINT=$(dig +short ${{ inputs.server-hostname }} | grep -i cfargotunnel | head -1)
+        TUNNEL_ENDPOINT=$(dig +short ${{ inputs.server-hostname }} | grep -i cfargotunnel | head -1 | tr -d '.')
+        # Remove trailing dot if present
+        TUNNEL_ENDPOINT=$(echo "$TUNNEL_ENDPOINT" | sed 's/\.$//')
         echo "Tunnel endpoint: $TUNNEL_ENDPOINT"
         
         if [ -n "$TUNNEL_ENDPOINT" ]; then
-          TUNNEL_IPV4=$(dig +short A $TUNNEL_ENDPOINT | head -1)
+          TUNNEL_IPV4=$(dig +short A $TUNNEL_ENDPOINT | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
           echo "Tunnel IPv4: $TUNNEL_IPV4"
           
           if [ -n "$TUNNEL_IPV4" ]; then
@@ -103,14 +105,15 @@ runs:
     
     - name: Test SSH connection
       run: |
-        echo "🔍 Testing SSH connection..."
+        echo "🔍 Testing SSH connection (10 second timeout)..."
         echo "Command: ls -la /"
         echo ""
-        if ssh ${{ inputs.host-alias }} "ls -la /"; then
+        if timeout 10s ssh -o ConnectTimeout=10 ${{ inputs.host-alias }} "ls -la /"; then
           echo ""
           echo "🎉 SSH tunnel is working!"
         else
-          echo "❌ SSH connection failed"
+          EXIT_CODE=$?
+          echo "❌ SSH connection failed or timed out (exit code: $EXIT_CODE)"
           exit 1
         fi
       shell: bash
