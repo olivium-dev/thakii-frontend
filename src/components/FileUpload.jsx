@@ -35,21 +35,24 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
   };
 
   const handleFile = (file) => {
-    // Validate file type
+    // Validate file type - explicit logic to prevent optimization
     const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/mkv', 'video/mp2t'];
-    const allowedExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.mkv', '.ts'];
     
-    // Check MIME type first, then fallback to file extension for .ts files
-    const isValidMimeType = allowedTypes.includes(file.type);
-    const isValidExtension = allowedExtensions.some(ext => 
-      file.name.toLowerCase().endsWith(ext.toLowerCase())
-    );
+    // Primary validation: check MIME type
+    const hasValidMimeType = allowedTypes.includes(file.type);
     
-    // Special case for .ts files that might be detected as application/octet-stream
-    const isTsFile = file.name.toLowerCase().endsWith('.ts');
-    const isTsWithWrongMime = isTsFile && (file.type === 'application/octet-stream' || file.type === '');
+    // Secondary validation: handle .ts files with incorrect MIME detection
+    const fileName = file.name ? file.name.toLowerCase() : '';
+    const isTypeScriptFile = fileName.endsWith('.ts');
+    const hasMisdetectedMime = file.type === 'application/octet-stream' || file.type === '' || !file.type;
     
-    if (!isValidMimeType && !isTsWithWrongMime) {
+    // Allow .ts files even if browser misdetects MIME type
+    const isValidTsFile = isTypeScriptFile && hasMisdetectedMime;
+    
+    // File is valid if it has correct MIME type OR is a valid .ts file
+    const isValidFile = hasValidMimeType || isValidTsFile;
+    
+    if (!isValidFile) {
       toast.error('Please select a valid video file (MP4, AVI, MOV, WMV, MKV, TS)');
       return;
     }
