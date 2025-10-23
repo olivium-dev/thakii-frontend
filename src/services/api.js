@@ -386,7 +386,12 @@ export const apiService = {
         // Trigger download using the presigned URL
         const link = document.createElement('a');
         link.href = response.data.download_url;
-        link.download = `${response.data.filename || videoId}.pdf`;
+        
+        // Use original video filename without extension, then add .pdf
+        const originalName = response.data.filename || videoId;
+        const pdfName = originalName.replace(/\.[^/.]+$/, '') + '.pdf';
+        link.download = pdfName;
+        
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
