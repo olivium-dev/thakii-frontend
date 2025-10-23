@@ -14,19 +14,19 @@ inputs:
   host-alias:
     description: 'SSH host alias to use in commands'
     required: true
-  cf-service-token-id:
-    description: 'Cloudflare service token ID'
-    required: true
-  cf-service-token-secret:
-    description: 'Cloudflare service token secret'
-    required: true
+  cloudflare-service-token-id:
+    description: 'Cloudflare service token ID (optional)'
+    required: false
+  cloudflare-service-token-secret:
+    description: 'Cloudflare service token secret (optional)'
+    required: false
 
 runs:
   using: 'composite'
   steps:
     - name: Disable IPv6 and Install cloudflared
       run: |
-        echo "🔧 Disabling IPv6..."
+        echo "🔧 Disabling IPv6 for cloudflared connectivity..."
         sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
         sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
         echo "📥 Installing cloudflared..."
@@ -49,22 +49,21 @@ runs:
         echo "✅ SSH key configured"
       shell: bash
     
-    - name: Configure SSH with cloudflared service token
+    - name: Configure SSH
       run: |
-        echo "⚙️  Configuring SSH for Cloudflare tunnel with service token..."
-        
-        # Use cloudflared access tcp with service token authentication
-        # This bypasses IPv6 DNS issues by using service token auth
+        echo "⚙️  Configuring SSH for Cloudflare tunnel..."
         cat >> ~/.ssh/config << 'EOF'
         Host ${{ inputs.host-alias }}
           HostName ${{ inputs.server-hostname }}
           User ${{ inputs.server-user }}
+          ProxyCommand cloudflared access tcp --hostname ${{ inputs.server-hostname }}
           IdentityFile ~/.ssh/id_rsa
-          ProxyCommand cloudflared access tcp --hostname %h --url tcp://127.0.0.1:2222 --service-token-id ${{ inputs.cf-service-token-id }} --service-token-secret ${{ inputs.cf-service-token-secret }}
           StrictHostKeyChecking no
           UserKnownHostsFile /dev/null
           ServerAliveInterval 30
           ServerAliveCountMax 3
+          ConnectTimeout 30
+          AddressFamily inet
         EOF
         echo "✅ SSH config created"
         echo ""
@@ -74,20 +73,14 @@ runs:
     
     - name: Test SSH connection
       run: |
-        echo "🔍 Testing SSH connection with 60s timeout..."
-        echo "Command: ls -la / (list root directory)"
+        echo "🔍 Testing SSH connection..."
+        echo "Command: ls -la /"
         echo ""
-        
-        # Simple test: list root directory
-        if timeout 60s ssh -v -o ConnectTimeout=30 ${{ inputs.host-alias }} "ls -la /" 2>&1 | tee /tmp/ssh_debug.log; then
+        if ssh ${{ inputs.host-alias }} "ls -la /"; then
           echo ""
           echo "🎉 SSH tunnel is working!"
         else
-          SSH_EXIT=$?
-          echo "❌ SSH connection failed or timed out (exit code: $SSH_EXIT)"
-          echo ""
-          echo "Last 30 lines of SSH debug output:"
-          tail -30 /tmp/ssh_debug.log
+          echo "❌ SSH connection failed"
           exit 1
         fi
       shell: bash

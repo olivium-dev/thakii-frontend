@@ -27,8 +27,8 @@ jobs:
         server-hostname: ${{ env.SERVER_HOST }}
         server-user: ${{ env.SERVER_USER }}
         host-alias: 'thakii-server-test'
-        cf-service-token-id: ${{ secrets.CF_SERVICE_TOKEN_ID }}
-        cf-service-token-secret: ${{ secrets.CF_SERVICE_TOKEN_SECRET }}
+        cloudflare-service-token-id: ${{ secrets.CF_SERVICE_TOKEN_ID }}
+        cloudflare-service-token-secret: ${{ secrets.CF_SERVICE_TOKEN_SECRET }}
     
     - name: Setup Node.js
       uses: actions/setup-node@v3
@@ -63,8 +63,8 @@ jobs:
         server-hostname: ${{ env.SERVER_HOST }}
         server-user: ${{ env.SERVER_USER }}
         host-alias: 'thakii-server'
-        cf-service-token-id: ${{ secrets.CF_SERVICE_TOKEN_ID }}
-        cf-service-token-secret: ${{ secrets.CF_SERVICE_TOKEN_SECRET }}
+        cloudflare-service-token-id: ${{ secrets.CF_SERVICE_TOKEN_ID }}
+        cloudflare-service-token-secret: ${{ secrets.CF_SERVICE_TOKEN_SECRET }}
     
     - name: Upload to server
       run: |
