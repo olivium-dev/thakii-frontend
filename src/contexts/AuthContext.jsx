@@ -178,6 +178,8 @@ export function AuthProvider({ children }) {
       return;
     }
 
+    let previousUser = null; // Track previous user to detect transitions
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
         console.log('🔄 Auth state changed:', user?.email || 'No user');
@@ -195,8 +197,16 @@ export function AuthProvider({ children }) {
           setCurrentUser(userData);
           console.log('✅ User authenticated:', userData.email, userData.isAdmin ? '(Admin)' : '(User)');
           
-          // Start 2-hour logout timer
-          startLogoutTimer();
+          // CRITICAL FIX: Only start logout timer on initial login (transition from null to user)
+          // This prevents infinite recursion from multiple auth state changes
+          if (!previousUser) {
+            console.log('🕐 Initial login detected - starting logout timer');
+            startLogoutTimer();
+          } else {
+            console.log('🔄 Token refresh detected - timer already running');
+          }
+          
+          previousUser = user; // Update previous user reference
           
           // Exchange Firebase token for backend token (don't await to prevent blocking)
           exchangeTokenWithBackend(user).catch(error => {
@@ -207,6 +217,7 @@ export function AuthProvider({ children }) {
           // User is signed out
           setCurrentUser(null);
           clearBackendToken();
+          previousUser = null; // Reset previous user
           console.log('👋 User signed out');
         }
         
