@@ -32,13 +32,21 @@ runs:
         
         # Force IPv4-only DNS resolution by adding to /etc/hosts
         echo "Forcing IPv4 DNS for Cloudflare tunnel..."
-        TUNNEL_ENDPOINT=$(dig +short ${{ inputs.server-hostname }} | grep cfargotunnel | head -1)
+        TUNNEL_ENDPOINT=$(dig +short ${{ inputs.server-hostname }} | grep -i cfargotunnel | head -1)
+        echo "Tunnel endpoint: $TUNNEL_ENDPOINT"
+        
         if [ -n "$TUNNEL_ENDPOINT" ]; then
           TUNNEL_IPV4=$(dig +short A $TUNNEL_ENDPOINT | head -1)
+          echo "Tunnel IPv4: $TUNNEL_IPV4"
+          
           if [ -n "$TUNNEL_IPV4" ]; then
             echo "$TUNNEL_IPV4 $TUNNEL_ENDPOINT" | sudo tee -a /etc/hosts
-            echo "Added: $TUNNEL_ENDPOINT → $TUNNEL_IPV4"
+            echo "✅ Added to /etc/hosts: $TUNNEL_ENDPOINT → $TUNNEL_IPV4"
+          else
+            echo "⚠️  Could not resolve IPv4 for $TUNNEL_ENDPOINT"
           fi
+        else
+          echo "⚠️  Could not find tunnel endpoint for ${{ inputs.server-hostname }}"
         fi
         
         echo "📥 Installing cloudflared..."
