@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { 
   signInWithEmailAndPassword, 
   signOut, 
@@ -24,6 +24,9 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [backendToken, setBackendToken] = useState(null);
   const [logoutTimer, setLogoutTimer] = useState(null);
+  
+  // Use ref to track if logout timer has been started (persists across renders)
+  const logoutTimerStartedRef = useRef(false);
 
   // Check if user is admin
   const isAdmin = (email) => {
@@ -142,7 +145,8 @@ export function AuthProvider({ children }) {
       if (logoutTimer) {
         clearTimeout(logoutTimer);
         setLogoutTimer(null);
-        console.log('🕐 Logout timer cleared');
+        logoutTimerStartedRef.current = false; // Reset timer started flag
+        console.log('🕐 Logout timer cleared and flag reset');
       }
       
       clearBackendToken();
@@ -178,8 +182,6 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    let previousUser = null; // Track previous user to detect transitions
-
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
         console.log('🔄 Auth state changed:', user?.email || 'No user');
@@ -197,16 +199,15 @@ export function AuthProvider({ children }) {
           setCurrentUser(userData);
           console.log('✅ User authenticated:', userData.email, userData.isAdmin ? '(Admin)' : '(User)');
           
-          // CRITICAL FIX: Only start logout timer on initial login (transition from null to user)
+          // CRITICAL FIX: Only start logout timer ONCE per session using persistent ref
           // This prevents infinite recursion from multiple auth state changes
-          if (!previousUser) {
-            console.log('🕐 Initial login detected - starting logout timer');
+          if (!logoutTimerStartedRef.current) {
+            console.log('🕐 Initial login detected - starting logout timer (ref check)');
+            logoutTimerStartedRef.current = true;
             startLogoutTimer();
           } else {
-            console.log('🔄 Token refresh detected - timer already running');
+            console.log('🔄 Auth state change detected - timer already running (ref = true)');
           }
-          
-          previousUser = user; // Update previous user reference
           
           // Exchange Firebase token for backend token (don't await to prevent blocking)
           exchangeTokenWithBackend(user).catch(error => {
@@ -217,8 +218,8 @@ export function AuthProvider({ children }) {
           // User is signed out
           setCurrentUser(null);
           clearBackendToken();
-          previousUser = null; // Reset previous user
-          console.log('👋 User signed out');
+          logoutTimerStartedRef.current = false; // Reset ref on logout
+          console.log('👋 User signed out - ref reset');
         }
         
         setLoading(false);
