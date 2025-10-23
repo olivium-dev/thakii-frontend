@@ -181,7 +181,7 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
                   <div className="flex justify-end">
                     {(video.status === 'done' || video.status === 'completed') ? (
                       <button
-                        onClick={() => onDownload(video.video_id)}
+                        onClick={() => onDownload(video.video_id, video.filename)}
                         className="min-h-[44px] inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full justify-center"
                       >
                         <FiDownload className="mr-2 w-4 h-4" />
@@ -246,7 +246,7 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {(video.status === 'done' || video.status === 'completed') ? (
                             <button
-                              onClick={() => onDownload(video.video_id)}
+                              onClick={() => onDownload(video.video_id, video.filename)}
                               className="min-h-[44px] inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                             >
                               <FiDownload className="mr-1 w-4 h-4" />

@@ -353,7 +353,7 @@ export const apiService = {
   },
 
   // Download PDF by video ID - LOCAL BACKEND ONLY
-  async downloadPdf(videoId) {
+  async downloadPdf(videoId, originalFilename = null) {
     console.log('📥 === DOWNLOAD PDF STARTED ===');
     console.log('   Video ID:', videoId);
     
@@ -390,12 +390,14 @@ export const apiService = {
         const link = document.createElement('a');
         link.href = response.data.download_url;
         
-        // Use original video filename without extension, then add .pdf
-        const originalName = response.data.filename || videoId;
+        // Use passed filename (from video list) or fallback to backend filename
+        const originalName = originalFilename || response.data.filename || videoId;
         const pdfName = originalName.replace(/\.[^/.]+$/, '') + '.pdf';
         
         console.log('📁 FILENAME PROCESSING:');
-        console.log('   Original name from backend:', originalName);
+        console.log('   Passed filename from video list:', originalFilename);
+        console.log('   Backend filename:', response.data.filename);
+        console.log('   Final original name used:', originalName);
         console.log('   Final PDF name:', pdfName);
         
         link.download = pdfName;

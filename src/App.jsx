@@ -163,9 +163,9 @@ function AppContent() {
   };
 
   // Handle PDF download
-  const handleDownload = async (videoId) => {
+  const handleDownload = async (videoId, originalFilename = null) => {
     try {
-      return await apiService.downloadPdf(videoId);
+      return await apiService.downloadPdf(videoId, originalFilename);
     } catch (error) {
       console.error('Download failed:', error);
       throw error;
