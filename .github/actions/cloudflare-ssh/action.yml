@@ -75,9 +75,12 @@ runs:
     - name: Test SSH connection
       run: |
         echo "🔍 Testing SSH connection with 60s timeout..."
+        echo "Command: ls -la / (list root directory)"
+        echo ""
         
-        # Add timeout and verbose output
-        if timeout 60s ssh -v -o ConnectTimeout=30 ${{ inputs.host-alias }} "echo '✅ SSH connection successful'" 2>&1 | tee /tmp/ssh_debug.log; then
+        # Simple test: list root directory
+        if timeout 60s ssh -v -o ConnectTimeout=30 ${{ inputs.host-alias }} "ls -la /" 2>&1 | tee /tmp/ssh_debug.log; then
+          echo ""
           echo "🎉 SSH tunnel is working!"
         else
           SSH_EXIT=$?
