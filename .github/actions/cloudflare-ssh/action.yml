@@ -29,11 +29,23 @@ runs:
         echo "🔧 Disabling IPv6 for cloudflared connectivity..."
         sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
         sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+        
+        # Force IPv4-only DNS resolution by adding to /etc/hosts
+        echo "Forcing IPv4 DNS for Cloudflare tunnel..."
+        TUNNEL_ENDPOINT=$(dig +short ${{ inputs.server-hostname }} | grep cfargotunnel | head -1)
+        if [ -n "$TUNNEL_ENDPOINT" ]; then
+          TUNNEL_IPV4=$(dig +short A $TUNNEL_ENDPOINT | head -1)
+          if [ -n "$TUNNEL_IPV4" ]; then
+            echo "$TUNNEL_IPV4 $TUNNEL_ENDPOINT" | sudo tee -a /etc/hosts
+            echo "Added: $TUNNEL_ENDPOINT → $TUNNEL_IPV4"
+          fi
+        fi
+        
         echo "📥 Installing cloudflared..."
         wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
         sudo dpkg -i cloudflared-linux-amd64.deb
         cloudflared --version
-        echo "✅ cloudflared installed with IPv6 disabled"
+        echo "✅ cloudflared installed with IPv6 disabled and IPv4 DNS forced"
       shell: bash
     
     - name: Setup SSH Key
