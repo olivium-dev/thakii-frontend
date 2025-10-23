@@ -74,11 +74,17 @@ runs:
     
     - name: Test SSH connection
       run: |
-        echo "🔍 Testing SSH connection..."
-        if ssh ${{ inputs.host-alias }} "echo '✅ SSH connection successful'"; then
+        echo "🔍 Testing SSH connection with 60s timeout..."
+        
+        # Add timeout and verbose output
+        if timeout 60s ssh -v -o ConnectTimeout=30 ${{ inputs.host-alias }} "echo '✅ SSH connection successful'" 2>&1 | tee /tmp/ssh_debug.log; then
           echo "🎉 SSH tunnel is working!"
         else
-          echo "❌ SSH connection failed"
+          SSH_EXIT=$?
+          echo "❌ SSH connection failed or timed out (exit code: $SSH_EXIT)"
+          echo ""
+          echo "Last 30 lines of SSH debug output:"
+          tail -30 /tmp/ssh_debug.log
           exit 1
         fi
       shell: bash
