@@ -353,10 +353,15 @@ export const apiService = {
   },
 
   // Download PDF by video ID - LOCAL BACKEND ONLY
-  async downloadPdf(videoId, originalFilename = null) {
+  async downloadPdf(videoId, originalFilename) {
     console.log('📥 === DOWNLOAD PDF STARTED ===');
     console.log('   Video ID:', videoId);
     console.log('   Original filename passed:', originalFilename);
+    
+    // Force parameter usage to prevent optimization
+    if (typeof originalFilename === 'undefined') {
+      originalFilename = null;
+    }
     
     try {
       // First, let's check what token we're using
