@@ -378,6 +378,9 @@ export const apiService = {
       console.log('📊 DOWNLOAD RESPONSE:');
       console.log('   Status:', response.status);
       console.log('   Data:', response.data);
+      console.log('🔍 FILENAME DEBUG:');
+      console.log('   Backend filename:', response.data.filename);
+      console.log('   Video ID:', response.data.video_id);
       
       // The response should contain a presigned URL
       if (response.data && response.data.download_url) {
@@ -390,6 +393,11 @@ export const apiService = {
         // Use original video filename without extension, then add .pdf
         const originalName = response.data.filename || videoId;
         const pdfName = originalName.replace(/\.[^/.]+$/, '') + '.pdf';
+        
+        console.log('📁 FILENAME PROCESSING:');
+        console.log('   Original name from backend:', originalName);
+        console.log('   Final PDF name:', pdfName);
+        
         link.download = pdfName;
         
         document.body.appendChild(link);
