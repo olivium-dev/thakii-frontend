@@ -17,14 +17,24 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Test SSH Connection FIRST
+      uses: ./.github/actions/cloudflare-ssh
+      with:
+        ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+        server-hostname: ${{ env.SERVER_HOST }}
+        server-user: ${{ env.SERVER_USER }}
+        host-alias: 'thakii-server-test'
+        cf-service-token-id: ${{ secrets.CF_SERVICE_TOKEN_ID }}
+        cf-service-token-secret: ${{ secrets.CF_SERVICE_TOKEN_SECRET }}
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
       
       - name: Install dependencies
         run: npm ci
