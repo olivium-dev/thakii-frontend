@@ -74,40 +74,40 @@ jobs:
       env:
         WEB_ROOT: ${{ env.WEB_ROOT }}
       run: |
-        ssh thakii-server << EOF
-            set -e
-            
-            echo "=== Deploying Frontend ==="
-            
-            # Create backup of current frontend
-            BACKUP_NAME="thakii-frontend-backup-\$(date +%Y%m%d-%H%M%S)"
-            if [ -d "$WEB_ROOT" ]; then
-              sudo cp -r $WEB_ROOT /tmp/\$BACKUP_NAME
-              echo "✅ Backup created: /tmp/\$BACKUP_NAME"
-            fi
-            
-            # Create temp directory for new build
-            mkdir -p /tmp/thakii-frontend-new
-            
-            # Extract build
-            tar -xzf /tmp/frontend-build.tar.gz -C /tmp/thakii-frontend-new
-            
-            # Remove old frontend and deploy new one
-            sudo rm -rf $WEB_ROOT
-            sudo mv /tmp/thakii-frontend-new $WEB_ROOT
-            
-            # Set correct permissions
-            sudo chown -R www-data:www-data $WEB_ROOT
-            sudo chmod -R 755 $WEB_ROOT
-            
-            # Reload nginx
-            sudo systemctl reload nginx
-            
-            # Clean up
-            rm /tmp/frontend-build.tar.gz
-            
-            echo "=== Frontend deployment complete ==="
-          EOF
+        ssh thakii-server << 'EOF'
+          set -e
+          
+          echo "=== Deploying Frontend ==="
+          
+          # Create backup of current frontend
+          BACKUP_NAME="thakii-frontend-backup-$(date +%Y%m%d-%H%M%S)"
+          if [ -d "$WEB_ROOT" ]; then
+            sudo cp -r $WEB_ROOT /tmp/$BACKUP_NAME
+            echo "✅ Backup created: /tmp/$BACKUP_NAME"
+          fi
+          
+          # Create temp directory for new build
+          mkdir -p /tmp/thakii-frontend-new
+          
+          # Extract build
+          tar -xzf /tmp/frontend-build.tar.gz -C /tmp/thakii-frontend-new
+          
+          # Remove old frontend and deploy new one
+          sudo rm -rf $WEB_ROOT
+          sudo mv /tmp/thakii-frontend-new $WEB_ROOT
+          
+          # Set correct permissions
+          sudo chown -R www-data:www-data $WEB_ROOT
+          sudo chmod -R 755 $WEB_ROOT
+          
+          # Reload nginx
+          sudo systemctl reload nginx
+          
+          # Clean up
+          rm /tmp/frontend-build.tar.gz
+          
+          echo "=== Frontend deployment complete ==="
+        EOF
     
     - name: Verify deployment
       run: |
