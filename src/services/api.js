@@ -356,6 +356,7 @@ export const apiService = {
   async downloadPdf(videoId, originalFilename = null) {
     console.log('📥 === DOWNLOAD PDF STARTED ===');
     console.log('   Video ID:', videoId);
+    console.log('   Original filename passed:', originalFilename);
     
     try {
       // First, let's check what token we're using
@@ -391,7 +392,10 @@ export const apiService = {
         link.href = response.data.download_url;
         
         // Use passed filename (from video list) or fallback to backend filename
-        const originalName = originalFilename || response.data.filename || videoId;
+        // Explicit parameter usage to prevent build optimization
+        const passedFilename = originalFilename;
+        const backendFilename = response.data.filename;
+        const originalName = passedFilename || backendFilename || videoId;
         const pdfName = originalName.replace(/\.[^/.]+$/, '') + '.pdf';
         
         console.log('📁 FILENAME PROCESSING:');
