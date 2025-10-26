@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { Upload, X, File, AlertCircle } from 'lucide-react';
+import { Upload, X, File, AlertCircle, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
+import BatchImportModal from './BatchImportModal';
 
 const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [showBatchImportModal, setShowBatchImportModal] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleDrag = (e) => {
@@ -231,20 +233,42 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
       {/* Separate Browse Files Button - Outside drag & drop area */}
       {!selectedFile && !isUploading && (
         <div className="mt-4 text-center">
-          <button
-            type="button"
-            onClick={openFileSelector}
-            className="min-h-[44px] inline-flex items-center justify-center px-6 py-3 border border-blue-600 text-sm font-medium rounded-lg text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-          >
-            <Upload className="w-5 h-5 mr-2" />
-            <span className="hidden sm:inline">Browse Files</span>
-            <span className="sm:hidden">Browse</span>
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <button
+              type="button"
+              onClick={openFileSelector}
+              className="min-h-[44px] inline-flex items-center justify-center px-6 py-3 border border-blue-600 text-sm font-medium rounded-lg text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            >
+              <Upload className="w-5 h-5 mr-2" />
+              <span className="hidden sm:inline">Browse Files</span>
+              <span className="sm:hidden">Browse</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowBatchImportModal(true)}
+              className="min-h-[44px] inline-flex items-center justify-center px-6 py-3 border border-green-600 text-sm font-medium rounded-lg text-green-600 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+            >
+              <Download className="w-5 h-5 mr-2" />
+              <span className="hidden sm:inline">Batch Import</span>
+              <span className="sm:hidden">Import</span>
+            </button>
+          </div>
           <p className="text-xs text-gray-500 mt-2">
-            Choose a video file from your device
+            Choose a video file from your device or import from wolkesicher.de
           </p>
         </div>
       )}
+
+      {/* Batch Import Modal */}
+      <BatchImportModal
+        isOpen={showBatchImportModal}
+        onClose={() => setShowBatchImportModal(false)}
+        onImportComplete={() => {
+          // Notify parent component to refresh video list
+          toast.success('Batch import completed! Refreshing video list...');
+          setShowBatchImportModal(false);
+        }}
+      />
     </div>
   );
 };

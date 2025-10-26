@@ -508,6 +508,45 @@ export const apiService = {
     const response = await api.get('/admin/admins/stats');
     return response.data;
   },
+
+  // ==================== BATCH IMPORT ====================
+  
+  /**
+   * List videos from a wolkesicher.de share URL
+   * @param {string} shareUrl - The Nextcloud share URL
+   * @returns {Promise<{videos: Array, total_count: number, total_size: number}>}
+   */
+  async listBatchImportVideos(shareUrl) {
+    const token = await getBackendToken();
+    const response = await api.post(
+      '/batch-import/list-videos',
+      { share_url: shareUrl },
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    return response.data;
+  },
+
+  /**
+   * Import selected videos from wolkesicher.de
+   * @param {string} shareUrl - The Nextcloud share URL
+   * @param {Array} selectedVideos - Array of video objects to import
+   * @returns {Promise<{batch_id: string, imported_videos: Array}>}
+   */
+  async importBatchVideos(shareUrl, selectedVideos) {
+    const token = await getBackendToken();
+    const response = await api.post(
+      '/batch-import/import-videos',
+      { 
+        share_url: shareUrl, 
+        selected_videos: selectedVideos 
+      },
+      { 
+        headers: { 'Authorization': `Bearer ${token}` },
+        timeout: 600000 // 10 minutes timeout for batch import
+      }
+    );
+    return response.data;
+  },
 };
 
 // Export token management functions
