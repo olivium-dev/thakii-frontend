@@ -509,42 +509,39 @@ export const apiService = {
     return response.data;
   },
 
-  // ==================== BATCH IMPORT ====================
+  // ==================== BATCH IMPORT (JOB-BASED) ====================
   
   /**
-   * List videos from a wolkesicher.de share URL
+   * Submit a batch import job
    * @param {string} shareUrl - The Nextcloud share URL
-   * @returns {Promise<{videos: Array, total_count: number, total_size: number}>}
+   * @returns {Promise<{success: boolean, job_id: string, total_videos: number, total_size: number}>}
    */
-  async listBatchImportVideos(shareUrl) {
-    const token = await getBackendToken();
-    const response = await api.post(
-      '/batch-import/list-videos',
-      { share_url: shareUrl },
-      { headers: { 'Authorization': `Bearer ${token}` } }
-    );
+  async submitBatchImport(shareUrl) {
+    const response = await api.post('/batch-import/submit', { 
+      share_url: shareUrl 
+    });
     return response.data;
   },
 
   /**
-   * Import selected videos from wolkesicher.de
-   * @param {string} shareUrl - The Nextcloud share URL
-   * @param {Array} selectedVideos - Array of video objects to import
-   * @returns {Promise<{batch_id: string, imported_videos: Array}>}
+   * Get status of a batch import job
+   * @param {string} jobId - The batch job ID
+   * @returns {Promise<{job_id: string, status: string, total_videos: number, processed_videos: number, failed_videos: number, videos: Array}>}
    */
-  async importBatchVideos(shareUrl, selectedVideos) {
-    const token = await getBackendToken();
-    const response = await api.post(
-      '/batch-import/import-videos',
-      { 
-        share_url: shareUrl, 
-        selected_videos: selectedVideos 
-      },
-      { 
-        headers: { 'Authorization': `Bearer ${token}` },
-        timeout: 600000 // 10 minutes timeout for batch import
-      }
-    );
+  async getBatchJobStatus(jobId) {
+    const response = await api.get(`/batch-import/status/${jobId}`);
+    return response.data;
+  },
+
+  /**
+   * List batch import jobs for the current user
+   * @param {number} limit - Maximum number of jobs to return (default: 20)
+   * @returns {Promise<{jobs: Array}>}
+   */
+  async listBatchJobs(limit = 20) {
+    const response = await api.get('/batch-import/jobs', {
+      params: { limit }
+    });
     return response.data;
   },
 };
