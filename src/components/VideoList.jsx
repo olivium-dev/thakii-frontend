@@ -1,11 +1,60 @@
-import React from 'react';
-import { FiDownload, FiRefreshCw, FiClock, FiCheck, FiAlertTriangle, FiLoader, FiCalendar, FiFile } from 'react-icons/fi';
+import React, { useState } from 'react';
+import { FiDownload, FiRefreshCw, FiClock, FiCheck, FiAlertTriangle, FiLoader, FiCalendar, FiFile, FiX } from 'react-icons/fi';
+import { apiService } from '../services/api';
+import { toast } from 'react-hot-toast';
 
 function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefreshActive, onStopAutoRefresh }) {
+  const [cancellingVideos, setCancellingVideos] = useState(new Set());
+  
   // Sort videos by upload date (newest first)
   const sortedVideos = [...videos].sort((a, b) => {
     return new Date(b.upload_date || 0) - new Date(a.upload_date || 0);
   });
+
+  // Handle video cancellation
+  const handleCancelVideo = async (video) => {
+    const videoId = video.video_id;
+    const filename = video.filename || 'Unknown';
+    
+    // Confirm cancellation
+    const isCompleted = video.status === 'done' || video.status === 'completed';
+    const confirmMessage = isCompleted 
+      ? `Are you sure you want to delete "${filename}"? This will permanently remove the video and PDF.`
+      : `Are you sure you want to cancel processing of "${filename}"?`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+    
+    // Add to cancelling set
+    setCancellingVideos(prev => new Set(prev).add(videoId));
+    
+    try {
+      const result = await apiService.cancelVideo(
+        videoId, 
+        'User requested cancellation',
+        isCompleted // cleanup_completed flag for done videos
+      );
+      
+      toast.success(result.message || 'Video cancelled successfully');
+      
+      // Refresh the video list to show updated status
+      if (onRefresh) {
+        onRefresh();
+      }
+      
+    } catch (error) {
+      console.error('Failed to cancel video:', error);
+      toast.error(error.message || 'Failed to cancel video');
+    } finally {
+      // Remove from cancelling set
+      setCancellingVideos(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(videoId);
+        return newSet;
+      });
+    }
+  };
 
   // Format date for better mobile display
   const formatDate = (dateString) => {
@@ -101,6 +150,18 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
           text: 'Failed', 
           color: 'text-red-700 bg-red-100 border-red-200' 
         };
+      case 'cancelled':
+        return { 
+          icon: <FiX className="w-4 h-4" />, 
+          text: 'Cancelled', 
+          color: 'text-gray-700 bg-gray-100 border-gray-200' 
+        };
+      case 'cancelling':
+        return { 
+          icon: <FiLoader className="w-4 h-4 animate-spin" />, 
+          text: 'Cancelling', 
+          color: 'text-orange-700 bg-orange-100 border-orange-200' 
+        };
       default:
         return { 
           icon: <FiClock className="w-4 h-4" />, 
@@ -178,20 +239,39 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
                   </div>
                   
                   {/* Card Actions */}
-                  <div className="flex justify-end">
+                  <div className="flex gap-2 justify-end">
+                    {/* Cancel Button - Show for cancellable statuses */}
+                    {(video.status === 'in_queue' || video.status === 'processing' || video.status === 'done' || video.status === 'completed' || video.status === 'failed') && video.status !== 'cancelled' && video.status !== 'cancelling' && (
+                      <button
+                        onClick={() => handleCancelVideo(video)}
+                        disabled={cancellingVideos.has(video.video_id)}
+                        className="min-h-[44px] inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={video.status === 'done' || video.status === 'completed' ? 'Delete video and PDF' : 'Cancel processing'}
+                      >
+                        {cancellingVideos.has(video.video_id) ? (
+                          <FiLoader className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <FiX className="w-4 h-4" />
+                        )}
+                      </button>
+                    )}
+                    
+                    {/* Download Button */}
                     {(video.status === 'done' || video.status === 'completed') ? (
                       <button
                         onClick={() => onDownload(video.video_id, video.filename)}
-                        className="min-h-[44px] inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full justify-center"
+                        className="min-h-[44px] inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex-1 justify-center"
                       >
                         <FiDownload className="mr-2 w-4 h-4" />
                         Download PDF
                       </button>
                     ) : (
-                      <div className="text-sm text-gray-500 py-2 text-center w-full">
-                        {(video.status === 'in_progress' || video.status === 'processing') ? 'Processing...' : 
+                      <div className="text-sm text-gray-500 py-2 text-center flex-1">
+                        {video.status === 'processing' ? 'Processing...' : 
                          video.status === 'in_queue' ? 'Waiting in queue...' : 
-                         video.status === 'failed' ? 'Processing failed' : 'Status unknown'}
+                         video.status === 'failed' ? 'Processing failed' : 
+                         video.status === 'cancelled' ? 'Cancelled' :
+                         video.status === 'cancelling' ? 'Cancelling...' : 'Status unknown'}
                       </div>
                     )}
                   </div>
@@ -244,22 +324,43 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {(video.status === 'done' || video.status === 'completed') ? (
-                            <button
-                              onClick={() => onDownload(video.video_id, video.filename)}
-                              className="min-h-[44px] inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            >
-                              <FiDownload className="mr-1 w-4 h-4" />
-                              <span className="hidden lg:inline">Download PDF</span>
-                              <span className="lg:hidden">PDF</span>
-                            </button>
-                          ) : (
-                            <span className="text-sm text-gray-500">
-                              {(video.status === 'in_progress' || video.status === 'processing') ? 'Processing...' : 
-                               video.status === 'in_queue' ? 'In queue...' : 
-                               video.status === 'failed' ? 'Failed' : 'Unknown'}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {/* Cancel Button - Show for cancellable statuses */}
+                            {(video.status === 'in_queue' || video.status === 'processing' || video.status === 'done' || video.status === 'completed' || video.status === 'failed') && video.status !== 'cancelled' && video.status !== 'cancelling' && (
+                              <button
+                                onClick={() => handleCancelVideo(video)}
+                                disabled={cancellingVideos.has(video.video_id)}
+                                className="min-h-[44px] inline-flex items-center px-2 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={video.status === 'done' || video.status === 'completed' ? 'Delete video and PDF' : 'Cancel processing'}
+                              >
+                                {cancellingVideos.has(video.video_id) ? (
+                                  <FiLoader className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <FiX className="w-4 h-4" />
+                                )}
+                              </button>
+                            )}
+                            
+                            {/* Download Button or Status */}
+                            {(video.status === 'done' || video.status === 'completed') ? (
+                              <button
+                                onClick={() => onDownload(video.video_id, video.filename)}
+                                className="min-h-[44px] inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                              >
+                                <FiDownload className="mr-1 w-4 h-4" />
+                                <span className="hidden lg:inline">Download PDF</span>
+                                <span className="lg:hidden">PDF</span>
+                              </button>
+                            ) : (
+                              <span className="text-sm text-gray-500">
+                                {video.status === 'processing' ? 'Processing...' : 
+                                 video.status === 'in_queue' ? 'In queue...' : 
+                                 video.status === 'failed' ? 'Failed' : 
+                                 video.status === 'cancelled' ? 'Cancelled' :
+                                 video.status === 'cancelling' ? 'Cancelling...' : 'Unknown'}
+                              </span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

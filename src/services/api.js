@@ -544,6 +544,39 @@ export const apiService = {
     });
     return response.data;
   },
+
+  /**
+   * Cancel video processing
+   * @param {string} videoId - Video ID to cancel
+   * @param {string} reason - Optional cancellation reason
+   * @param {boolean} cleanupCompleted - Whether to cleanup completed videos
+   * @returns {Promise} Response data
+   */
+  async cancelVideo(videoId, reason = 'User requested cancellation', cleanupCompleted = false) {
+    console.log(`🚫 Cancelling video: ${videoId}`);
+    
+    try {
+      const response = await api.post(`/cancel/${videoId}`, {
+        reason: reason,
+        cleanup_completed: cleanupCompleted
+      });
+      
+      console.log('✅ Video cancellation successful:', response.data);
+      return response.data;
+      
+    } catch (error) {
+      console.error('❌ Video cancellation failed:', error);
+      
+      // Extract error message from response
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to cancel video';
+      
+      // Re-throw with better error message
+      const enhancedError = new Error(errorMessage);
+      enhancedError.originalError = error;
+      enhancedError.videoId = videoId;
+      throw enhancedError;
+    }
+  },
 };
 
 // Export token management functions
