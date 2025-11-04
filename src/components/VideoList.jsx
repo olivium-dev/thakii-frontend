@@ -15,7 +15,7 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
   });
   
   // Truncate filename for display
-  const truncateFilename = (filename, maxLength = 36) => {
+  const truncateFilename = (filename, maxLength = 25) => {
     if (!filename) return 'Unknown';
     if (filename.length <= maxLength) return filename;
     
@@ -245,7 +245,7 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
             {sortedVideos.map((video) => {
               const { icon, text, color } = getStatusInfo(video.status, video.progress_percent);
               const displayFilename = truncateFilename(video.filename);
-              const isLongFilename = video.filename && video.filename.length > 36;
+              const isLongFilename = video.filename && video.filename.length > 25;
               
               return (
                 <div 
