@@ -6,7 +6,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
 import FileUpload from './components/FileUpload';
 import VideoList from './components/VideoList';
-import ServiceStatus from './components/ServiceStatus';
+// ServiceStatus import removed as component is now hidden
 import FirebaseLogin from './components/Auth/FirebaseLogin';
 import AdminDashboard from './components/AdminDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -325,9 +325,9 @@ function AppContent() {
           <div className="space-y-4 sm:space-y-8">
             {/* Mobile-first responsive layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-              {/* Left column - Upload and Status (full width on mobile) */}
+              {/* Left column - Upload (full width on mobile) */}
               <div className="lg:col-span-1 space-y-4 sm:space-y-6">
-                <ServiceStatus healthStatus={healthStatus} />
+                {/* ServiceStatus component hidden as requested */}
                 <FileUpload 
                   onUpload={handleUpload}
                   isUploading={isUploading}
