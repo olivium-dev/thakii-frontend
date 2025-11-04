@@ -577,6 +577,37 @@ export const apiService = {
       throw enhancedError;
     }
   },
+  
+  /**
+   * Import a video from a direct URL
+   * @param {string} url - Direct URL to the video file
+   * @param {string} filename - Optional custom filename
+   * @returns {Promise} Response data with video_id
+   */
+  async importSingleUrl(url, filename) {
+    console.log(`📥 Importing single video from URL: ${url}`);
+    
+    try {
+      const response = await api.post('/import-url', {
+        url: url,
+        filename: filename
+      });
+      
+      console.log('✅ Single URL import successful:', response.data);
+      return response.data;
+      
+    } catch (error) {
+      console.error('❌ Single URL import failed:', error);
+      
+      // Extract error message from response
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to import video from URL';
+      
+      // Re-throw with better error message
+      const enhancedError = new Error(errorMessage);
+      enhancedError.originalError = error;
+      throw enhancedError;
+    }
+  },
 };
 
 // Export token management functions

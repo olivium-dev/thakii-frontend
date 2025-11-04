@@ -1,26 +1,50 @@
 import React, { useState } from 'react';
-import { FiDownload, FiRefreshCw, FiClock, FiCheck, FiAlertTriangle, FiLoader, FiCalendar, FiFile, FiX } from 'react-icons/fi';
+import { FiDownload, FiRefreshCw, FiClock, FiCheck, FiAlertTriangle, FiLoader, FiCalendar, FiFile, FiX, FiInfo, FiPercent } from 'react-icons/fi';
 import { apiService } from '../services/api';
 import { toast } from 'react-hot-toast';
+import VideoDetailsModal from './VideoDetailsModal';
 
 function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefreshActive, onStopAutoRefresh }) {
   const [cancellingVideos, setCancellingVideos] = useState(new Set());
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   
   // Sort videos by upload date (newest first)
   const sortedVideos = [...videos].sort((a, b) => {
     return new Date(b.upload_date || 0) - new Date(a.upload_date || 0);
   });
+  
+  // Truncate filename for display
+  const truncateFilename = (filename, maxLength = 36) => {
+    if (!filename) return 'Unknown';
+    if (filename.length <= maxLength) return filename;
+    
+    const extension = filename.split('.').pop();
+    const nameWithoutExt = filename.substring(0, filename.lastIndexOf('.'));
+    const truncatedName = nameWithoutExt.substring(0, maxLength - extension.length - 4);
+    
+    return `${truncatedName}...${extension}`;
+  };
+
+  // Show video details modal
+  const showVideoDetails = (video) => {
+    setSelectedVideo(video);
+    setShowDetailsModal(true);
+  };
 
   // Handle video cancellation
-  const handleCancelVideo = async (video) => {
+  const handleCancelVideo = async (video, e) => {
+    // Stop event propagation to prevent opening details modal
+    e && e.stopPropagation();
+    
     const videoId = video.video_id;
     const filename = video.filename || 'Unknown';
     
     // Confirm cancellation
     const isCompleted = video.status === 'done' || video.status === 'completed';
     const confirmMessage = isCompleted 
-      ? `Are you sure you want to delete "${filename}"? This will permanently remove the video and PDF.`
-      : `Are you sure you want to cancel processing of "${filename}"?`;
+      ? `Are you sure you want to delete "${truncateFilename(filename)}"? This will permanently remove the video and PDF.`
+      : `Are you sure you want to cancel processing of "${truncateFilename(filename)}"?`;
     
     if (!window.confirm(confirmMessage)) {
       return;
@@ -116,8 +140,8 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
     );
   }
 
-  // Get status icon and color
-  const getStatusInfo = (status) => {
+  // Get status icon and color with progress
+  const getStatusInfo = (status, progressPercent) => {
     switch (status) {
       case 'in_queue':
         return { 
@@ -125,7 +149,16 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
           text: 'In Queue', 
           color: 'text-yellow-700 bg-yellow-100 border-yellow-200' 
         };
-      case 'in_progress':
+      case 'processing':
+        const progressText = progressPercent !== undefined && progressPercent > 0 
+          ? `Processing (${progressPercent}%)` 
+          : 'Processing';
+        return { 
+          icon: <FiLoader className="w-4 h-4 animate-spin" />, 
+          text: progressText, 
+          color: 'text-blue-700 bg-blue-100 border-blue-200' 
+        };
+      case 'in_progress': // Legacy status
         return { 
           icon: <FiLoader className="w-4 h-4 animate-spin" />, 
           text: 'Processing', 
@@ -137,12 +170,6 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
           icon: <FiCheck className="w-4 h-4" />, 
           text: 'Ready', 
           color: 'text-green-700 bg-green-100 border-green-200' 
-        };
-      case 'processing':
-        return { 
-          icon: <FiLoader className="w-4 h-4 animate-spin" />, 
-          text: 'Processing', 
-          color: 'text-blue-700 bg-blue-100 border-blue-200' 
         };
       case 'failed':
         return { 
@@ -172,7 +199,8 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-4 sm:p-6">
+    <>
+      <div className="bg-white shadow rounded-lg p-4 sm:p-6">
       {/* Header - Mobile Responsive */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
         <h2 className="text-lg sm:text-xl font-semibold text-gray-800">My Videos</h2>
@@ -215,24 +243,59 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
           {/* Mobile Card Layout */}
           <div className="space-y-4 md:hidden">
             {sortedVideos.map((video) => {
-              const { icon, text, color } = getStatusInfo(video.status);
+              const { icon, text, color } = getStatusInfo(video.status, video.progress_percent);
+              const displayFilename = truncateFilename(video.filename);
+              const isLongFilename = video.filename && video.filename.length > 36;
+              
               return (
-                <div key={video.video_id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-                  {/* Card Header */}
+                <div 
+                  key={video.video_id} 
+                  className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => showVideoDetails(video)}
+                >
+                  {/* Card Header with Status */}
                   <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-gray-900 truncate pr-2" title={video.filename}>
-                        <FiFile className="inline w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
-                        {video.filename}
-                      </h3>
+                    <div className="flex-1 mr-2">
+                      <div className="flex items-start">
+                        <FiFile className="w-4 h-4 text-gray-400 mt-0.5 mr-2 flex-shrink-0" />
+                        <div className="flex-1">
+                          <h3 className="text-sm font-medium text-gray-900 break-words">
+                            {displayFilename}
+                          </h3>
+                          {isLongFilename && (
+                            <button 
+                              className="text-xs text-blue-600 hover:text-blue-800 mt-1 flex items-center"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                showVideoDetails(video);
+                              }}
+                            >
+                              <FiInfo className="w-3 h-3 mr-1" />
+                              View full details
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${color} flex-shrink-0`}>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${color}`}>
                       {icon}
                       <span className="ml-1">{text}</span>
                     </span>
                   </div>
                   
-                  {/* Card Body */}
+                  {/* Progress Bar for Processing Videos */}
+                  {video.status === 'processing' && video.progress_percent !== undefined && video.progress_percent > 0 && (
+                    <div className="mb-3">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${video.progress_percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Upload Date */}
                   <div className="flex items-center text-sm text-gray-500 mb-4">
                     <FiCalendar className="w-4 h-4 mr-1 flex-shrink-0" />
                     <span>{formatDate(video.upload_date)}</span>
@@ -243,7 +306,7 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
                     {/* Cancel Button - Show for cancellable statuses */}
                     {(video.status === 'in_queue' || video.status === 'processing' || video.status === 'done' || video.status === 'completed' || video.status === 'failed') && video.status !== 'cancelled' && video.status !== 'cancelling' && (
                       <button
-                        onClick={() => handleCancelVideo(video)}
+                        onClick={(e) => handleCancelVideo(video, e)}
                         disabled={cancellingVideos.has(video.video_id)}
                         className="min-h-[44px] inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         title={video.status === 'done' || video.status === 'completed' ? 'Delete video and PDF' : 'Cancel processing'}
@@ -259,7 +322,10 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
                     {/* Download Button */}
                     {(video.status === 'done' || video.status === 'completed') ? (
                       <button
-                        onClick={() => onDownload(video.video_id, video.filename)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDownload(video.video_id, video.filename);
+                        }}
                         className="min-h-[44px] inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex-1 justify-center"
                       >
                         <FiDownload className="mr-2 w-4 h-4" />
@@ -302,13 +368,35 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {sortedVideos.map((video) => {
-                    const { icon, text, color } = getStatusInfo(video.status);
+                    const { icon, text, color } = getStatusInfo(video.status, video.progress_percent);
+                    const displayFilename = truncateFilename(video.filename);
+                    const isLongFilename = video.filename && video.filename.length > 36;
+                    
                     return (
-                      <tr key={video.video_id} className="hover:bg-gray-50">
+                      <tr 
+                        key={video.video_id} 
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={() => showVideoDetails(video)}
+                      >
                         <td className="px-6 py-4 text-sm font-medium text-gray-900">
                           <div className="flex items-center">
                             <FiFile className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
-                            <span className="truncate" title={video.filename}>{video.filename}</span>
+                            <div className="flex-1">
+                              <span className="truncate" title={video.filename}>
+                                {displayFilename}
+                              </span>
+                              {isLongFilename && (
+                                <button 
+                                  className="ml-2 text-blue-600 hover:text-blue-800"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    showVideoDetails(video);
+                                  }}
+                                >
+                                  <FiInfo className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
@@ -318,17 +406,29 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${color}`}>
-                            {icon}
-                            <span className="ml-1">{text}</span>
-                          </span>
+                          <div>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${color}`}>
+                              {icon}
+                              <span className="ml-1">{text}</span>
+                            </span>
+                            {video.status === 'processing' && video.progress_percent !== undefined && video.progress_percent > 0 && (
+                              <div className="mt-2 w-32">
+                                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                  <div 
+                                    className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                                    style={{ width: `${video.progress_percent}%` }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="flex items-center gap-2">
                             {/* Cancel Button - Show for cancellable statuses */}
                             {(video.status === 'in_queue' || video.status === 'processing' || video.status === 'done' || video.status === 'completed' || video.status === 'failed') && video.status !== 'cancelled' && video.status !== 'cancelling' && (
                               <button
-                                onClick={() => handleCancelVideo(video)}
+                                onClick={(e) => handleCancelVideo(video, e)}
                                 disabled={cancellingVideos.has(video.video_id)}
                                 className="min-h-[44px] inline-flex items-center px-2 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                 title={video.status === 'done' || video.status === 'completed' ? 'Delete video and PDF' : 'Cancel processing'}
@@ -344,7 +444,10 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
                             {/* Download Button or Status */}
                             {(video.status === 'done' || video.status === 'completed') ? (
                               <button
-                                onClick={() => onDownload(video.video_id, video.filename)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDownload(video.video_id, video.filename);
+                                }}
                                 className="min-h-[44px] inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                               >
                                 <FiDownload className="mr-1 w-4 h-4" />
@@ -380,6 +483,17 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
         </>
       )}
     </div>
+
+      {/* Video Details Modal */}
+      <VideoDetailsModal
+        video={selectedVideo}
+        isOpen={showDetailsModal}
+        onClose={() => {
+          setShowDetailsModal(false);
+          setSelectedVideo(null);
+        }}
+      />
+    </>
   );
 }
 
