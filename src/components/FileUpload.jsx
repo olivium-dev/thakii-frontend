@@ -232,39 +232,51 @@ const FileUpload = ({ onUpload, isUploading, uploadProgress }) => {
         )}
       </div>
 
-      {/* Separate Browse Files Button - Outside drag & drop area */}
+      {/* Upload Options - Vertical Layout */}
       {!selectedFile && !isUploading && (
-        <div className="mt-4 text-center">
-          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+        <div className="mt-6">
+          <div className="flex flex-col gap-3 max-w-sm mx-auto">
+            {/* Browse Files Button */}
             <button
               type="button"
               onClick={openFileSelector}
-              className="min-h-[44px] inline-flex items-center justify-center px-6 py-3 border border-blue-600 text-sm font-medium rounded-lg text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+              className="group relative min-h-[56px] flex items-center justify-center px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-500/25 transition-all duration-200 transform hover:scale-[1.02]"
             >
-              <Upload className="w-5 h-5 mr-2" />
-              <span className="hidden sm:inline">Browse Files</span>
-              <span className="sm:hidden">Browse</span>
+              <Upload className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform duration-200" />
+              <div className="text-left">
+                <div className="text-base font-semibold">Browse Files</div>
+                <div className="text-xs text-blue-100 opacity-90">Choose from device</div>
+              </div>
             </button>
+
+            {/* Batch Import Button */}
             <button
               type="button"
               onClick={() => setShowBatchImportModal(true)}
-              className="min-h-[44px] inline-flex items-center justify-center px-6 py-3 border border-green-600 text-sm font-medium rounded-lg text-green-600 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+              className="group relative min-h-[56px] flex items-center justify-center px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-4 focus:ring-green-500/25 transition-all duration-200 transform hover:scale-[1.02]"
             >
-              <Download className="w-5 h-5 mr-2" />
-              <span className="hidden sm:inline">Batch Import</span>
-              <span className="sm:hidden">Import</span>
+              <Download className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform duration-200" />
+              <div className="text-left">
+                <div className="text-base font-semibold">Batch Import</div>
+                <div className="text-xs text-green-100 opacity-90">Multiple videos</div>
+              </div>
             </button>
+
+            {/* Import from URL Button */}
             <button
               type="button"
               onClick={() => setShowSingleUrlModal(true)}
-              className="min-h-[44px] inline-flex items-center justify-center px-6 py-3 border border-blue-600 text-sm font-medium rounded-lg text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+              className="group relative min-h-[56px] flex items-center justify-center px-6 py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-4 focus:ring-purple-500/25 transition-all duration-200 transform hover:scale-[1.02]"
             >
-              <Link className="w-5 h-5 mr-2" />
-              <span className="hidden sm:inline">Import from URL</span>
-              <span className="sm:hidden">URL</span>
+              <Link className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform duration-200" />
+              <div className="text-left">
+                <div className="text-base font-semibold">Import from URL</div>
+                <div className="text-xs text-purple-100 opacity-90">Nextcloud & direct links</div>
+              </div>
             </button>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
+          
+          <p className="text-sm text-gray-500 mt-4 text-center max-w-md mx-auto">
             Choose a video file from your device or import from wolkesicher.de
           </p>
         </div>
