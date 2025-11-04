@@ -355,9 +355,6 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Filename
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                      Upload Date
-                    </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
@@ -382,27 +379,27 @@ function VideoList({ videos, onDownload, onRefresh, isLoading, error, autoRefres
                           <div className="flex items-center">
                             <FiFile className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
                             <div className="flex-1">
-                              <span className="truncate" title={video.filename}>
-                                {displayFilename}
-                              </span>
-                              {isLongFilename && (
-                                <button 
-                                  className="ml-2 text-blue-600 hover:text-blue-800"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    showVideoDetails(video);
-                                  }}
-                                >
-                                  <FiInfo className="w-4 h-4" />
-                                </button>
-                              )}
+                              <div>
+                                <span className="truncate" title={video.filename}>
+                                  {displayFilename}
+                                </span>
+                                {isLongFilename && (
+                                  <button 
+                                    className="ml-2 text-blue-600 hover:text-blue-800"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      showVideoDetails(video);
+                                    }}
+                                  >
+                                    <FiInfo className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex items-center text-xs text-gray-500 mt-1">
+                                <FiCalendar className="w-3 h-3 mr-1 text-gray-400" />
+                                {formatDate(video.upload_date)}
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
-                          <div className="flex items-center">
-                            <FiCalendar className="w-4 h-4 mr-2 text-gray-400" />
-                            {formatDate(video.upload_date)}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
