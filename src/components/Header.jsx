@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { FileText, Activity, LogOut, User, Shield, Menu, X } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { FileText, Activity, LogOut, User, Shield, Menu, X, Coins } from 'lucide-react';
+import { useAuth } from '../contexts/authAdapter';
 
-const Header = ({ healthStatus, activeTab, setActiveTab, isAdmin }) => {
+const Header = ({ healthStatus, activeTab, setActiveTab, isAdmin, credits, onBuyCredits }) => {
   const { currentUser, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -72,8 +72,27 @@ const Header = ({ healthStatus, activeTab, setActiveTab, isAdmin }) => {
             </nav>
           )}
 
-          {/* Right side - Health Status and User Menu */}
+          {/* Right side - Credits, Health Status and User Menu */}
           <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Credits Badge */}
+            {currentUser && (
+              <button
+                onClick={onBuyCredits}
+                className="hidden sm:flex items-center space-x-1.5 bg-amber-50 border border-amber-200 rounded-full px-3 py-1.5 hover:bg-amber-100 transition-colors duration-200 min-h-[36px]"
+                title="View credit packages"
+              >
+                <Coins className="w-4 h-4 text-amber-500" />
+                {credits !== null && credits !== undefined ? (
+                  <span className="text-sm font-medium text-amber-700">{credits}</span>
+                ) : (
+                  <span className="w-6 h-3 bg-amber-200 rounded animate-pulse" />
+                )}
+                <span className="text-xs font-semibold bg-amber-500 text-white rounded-full px-2 py-0.5">
+                  Buy
+                </span>
+              </button>
+            )}
+
             {/* Health Status - Compact on mobile */}
             <div className="flex items-center space-x-1 sm:space-x-2">
               <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
@@ -114,6 +133,22 @@ const Header = ({ healthStatus, activeTab, setActiveTab, isAdmin }) => {
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
+            )}
+
+            {/* Credits Badge - Mobile compact */}
+            {currentUser && (
+              <button
+                onClick={onBuyCredits}
+                className="sm:hidden flex items-center space-x-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-1 min-h-[32px]"
+                title="View credit packages"
+              >
+                <Coins className="w-3.5 h-3.5 text-amber-500" />
+                {credits !== null && credits !== undefined ? (
+                  <span className="text-xs font-medium text-amber-700">{credits}</span>
+                ) : (
+                  <span className="w-4 h-2.5 bg-amber-200 rounded animate-pulse" />
+                )}
+              </button>
             )}
 
             {/* Mobile menu button */}
@@ -162,6 +197,28 @@ const Header = ({ healthStatus, activeTab, setActiveTab, isAdmin }) => {
                   Admin Dashboard
                 </button>
               )}
+
+              {/* Credits - Mobile */}
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onBuyCredits) onBuyCredits();
+                }}
+                className="w-full text-left min-h-[44px] px-4 py-3 rounded-md text-sm font-medium transition duration-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 flex items-center justify-between"
+              >
+                <div className="flex items-center space-x-2">
+                  <Coins className="w-4 h-4 text-amber-500" />
+                  <span>Credits</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {credits !== null && credits !== undefined ? (
+                    <span className="text-sm font-semibold text-amber-600">{credits}</span>
+                  ) : (
+                    <span className="w-6 h-3 bg-amber-200 rounded animate-pulse" />
+                  )}
+                  <span className="text-xs font-semibold bg-amber-500 text-white rounded-full px-2 py-0.5">Buy</span>
+                </div>
+              </button>
 
               {/* User Info and Logout */}
               <div className="pt-4 border-t border-gray-200">

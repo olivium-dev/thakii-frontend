@@ -1,0 +1,43 @@
+[
+  {
+    "video_id": "mock-video-001",
+    "filename": "lecture-intro.mp4",
+    "status": "in_queue",
+    "upload_date": "2025-01-14T10:00:00.000Z",
+    "created_at": "2025-01-14T10:00:00.000Z",
+    "updated_at": "2025-01-14T10:00:00.000Z"
+  },
+  {
+    "video_id": "mock-video-002",
+    "filename": "chapter-one-algorithms.mp4",
+    "status": "processing",
+    "progress_percent": 45,
+    "upload_date": "2025-01-14T09:30:00.000Z",
+    "created_at": "2025-01-14T09:30:00.000Z",
+    "updated_at": "2025-01-14T09:35:00.000Z"
+  },
+  {
+    "video_id": "mock-video-003",
+    "filename": "week3-lecture.pdf-source.mp4",
+    "status": "done",
+    "upload_date": "2025-01-13T14:00:00.000Z",
+    "created_at": "2025-01-13T14:00:00.000Z",
+    "updated_at": "2025-01-13T15:00:00.000Z"
+  },
+  {
+    "video_id": "mock-video-004",
+    "filename": "failed-transcription.mp4",
+    "status": "failed",
+    "upload_date": "2025-01-12T11:00:00.000Z",
+    "created_at": "2025-01-12T11:00:00.000Z",
+    "updated_at": "2025-01-12T11:10:00.000Z"
+  },
+  {
+    "video_id": "mock-video-005",
+    "filename": "cancelled-demo.mp4",
+    "status": "cancelled",
+    "upload_date": "2025-01-11T08:00:00.000Z",
+    "created_at": "2025-01-11T08:00:00.000Z",
+    "updated_at": "2025-01-11T08:05:00.000Z"
+  }
+]

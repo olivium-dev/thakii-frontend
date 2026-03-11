@@ -1,0 +1,20 @@
+[
+  {
+    "id": "admin-1",
+    "email": "ouday.khaled@gmail.com",
+    "role": "super_admin",
+    "description": "Super admin"
+  },
+  {
+    "id": "admin-2",
+    "email": "appsaawt@gmail.com",
+    "role": "super_admin",
+    "description": "Super admin"
+  },
+  {
+    "id": "admin-3",
+    "email": "demo@thakii.com",
+    "role": "admin",
+    "description": "Demo admin user"
+  }
+]

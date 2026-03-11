@@ -578,6 +578,21 @@ export const apiService = {
     }
   },
   
+  async getCreditsBalance() {
+    const response = await api.get('/api/wallet/balance');
+    return response.data;
+  },
+
+  async getCreditPackages() {
+    const response = await api.get('/api/wallet/packages');
+    return response.data;
+  },
+
+  async purchaseCreditPackage(packageId) {
+    const response = await api.post(`/api/wallet/packages/${packageId}/purchase`);
+    return response.data;
+  },
+
   /**
    * Import a video from a direct URL
    * @param {string} url - Direct URL to the video file

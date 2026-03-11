@@ -1,0 +1,23 @@
+[
+  {
+    "id": "starter",
+    "name": "Starter",
+    "credits": 10,
+    "price": 4.99,
+    "popular": false
+  },
+  {
+    "id": "standard",
+    "name": "Standard",
+    "credits": 50,
+    "price": 19.99,
+    "popular": true
+  },
+  {
+    "id": "premium",
+    "name": "Premium",
+    "credits": 100,
+    "price": 34.99,
+    "popular": false
+  }
+]
