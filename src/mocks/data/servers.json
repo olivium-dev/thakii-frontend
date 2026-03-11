@@ -1,0 +1,29 @@
+[
+  {
+    "id": "server-1",
+    "name": "Primary Worker",
+    "url": "https://worker1.thakii.example.com",
+    "type": "processing",
+    "description": "Main video processing server",
+    "status": "healthy",
+    "last_check": "2025-01-15T12:00:00.000Z"
+  },
+  {
+    "id": "server-2",
+    "name": "Backup Worker",
+    "url": "https://worker2.thakii.example.com",
+    "type": "processing",
+    "description": "Fallback processing",
+    "status": "healthy",
+    "last_check": "2025-01-15T11:58:00.000Z"
+  },
+  {
+    "id": "server-3",
+    "name": "Staging",
+    "url": "https://staging.thakii.example.com",
+    "type": "processing",
+    "description": "Staging environment",
+    "status": "offline",
+    "last_check": "2025-01-15T11:00:00.000Z"
+  }
+]

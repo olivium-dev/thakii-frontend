@@ -1,0 +1,37 @@
+[
+  {
+    "id": "mock-video-001",
+    "video_name": "lecture-intro.mp4",
+    "status": "in_queue",
+    "user_email": "demo@thakii.com",
+    "date": "2025-01-14T10:00:00.000Z"
+  },
+  {
+    "id": "mock-video-002",
+    "video_name": "chapter-one-algorithms.mp4",
+    "status": "processing",
+    "user_email": "demo@thakii.com",
+    "date": "2025-01-14T09:30:00.000Z"
+  },
+  {
+    "id": "mock-video-003",
+    "video_name": "week3-lecture.pdf-source.mp4",
+    "status": "done",
+    "user_email": "demo@thakii.com",
+    "date": "2025-01-13T14:00:00.000Z"
+  },
+  {
+    "id": "mock-video-004",
+    "video_name": "failed-transcription.mp4",
+    "status": "failed",
+    "user_email": "user2@example.com",
+    "date": "2025-01-12T11:00:00.000Z"
+  },
+  {
+    "id": "mock-video-005",
+    "video_name": "cancelled-demo.mp4",
+    "status": "cancelled",
+    "user_email": "user2@example.com",
+    "date": "2025-01-11T08:00:00.000Z"
+  }
+]

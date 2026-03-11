@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
 
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/authAdapter';
 import Header from './components/Header';
 import FileUpload from './components/FileUpload';
 import VideoList from './components/VideoList';
-// ServiceStatus import removed as component is now hidden
+import CreditPackagesModal from './components/CreditPackagesModal';
 import FirebaseLogin from './components/Auth/FirebaseLogin';
 import AdminDashboard from './components/AdminDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
-import { apiService } from './services/api';
-import { websocketService } from './services/websocket';
+import { apiService } from './services/apiAdapter';
+import { websocketService } from './services/websocketAdapter';
 
 function AppContent() {
   const { currentUser, isAdmin } = useAuth();
@@ -21,7 +21,9 @@ function AppContent() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isLoadingVideos, setIsLoadingVideos] = useState(true);
   const [activeTab, setActiveTab] = useState('videos');
-  
+  const [credits, setCredits] = useState(null);
+  const [showCreditPackages, setShowCreditPackages] = useState(false);
+
   // Auto-refresh state
   const [autoRefreshActive, setAutoRefreshActive] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState(null);
@@ -35,6 +37,15 @@ function AppContent() {
       console.error('Failed to fetch health status:', error);
       // Do not overwrite an existing healthy status with an error from a transient failure
       setHealthStatus((prev) => prev ? prev : { status: 'unhealthy' });
+    }
+  };
+
+  const fetchCredits = async () => {
+    try {
+      const data = await apiService.getCreditsBalance();
+      setCredits(data.credits);
+    } catch (error) {
+      console.error('Failed to fetch credits:', error);
     }
   };
 
@@ -229,9 +240,9 @@ function AppContent() {
   useEffect(() => {
     if (currentUser) {
       console.log('👤 User authenticated, starting initial data fetch...');
-      // Initial fetch for immediate data
       fetchHealthStatus();
       fetchVideos();
+      fetchCredits();
       
       // Start auto-refresh after initial load
       console.log('🚀 Triggering auto-refresh after initial load...');
@@ -275,7 +286,7 @@ function AppContent() {
               } else if (taskData.status === 'failed') {
                 toast.error(`Video "${taskData.filename || 'unknown'}" processing failed`);
               } else if (taskData.status === 'processing') {
-                toast.info(`Processing video "${taskData.filename || 'unknown'}"...`);
+                toast(`Processing video "${taskData.filename || 'unknown'}"...`, { icon: 'ℹ️' });
               }
             }
             
@@ -318,6 +329,8 @@ function AppContent() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         isAdmin={isAdmin}
+        credits={credits}
+        onBuyCredits={() => setShowCreditPackages(true)}
       />
       
       <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
@@ -362,6 +375,13 @@ function AppContent() {
         )}
       </main>
 
+
+      <CreditPackagesModal
+        isOpen={showCreditPackages}
+        onClose={() => setShowCreditPackages(false)}
+        credits={credits}
+        onPurchaseComplete={(newBalance) => setCredits(newBalance)}
+      />
 
       {/* Toast Notifications */}
       <Toaster
