@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feature/websocket-updates
+      - feature/Finalize-payment-flow
   workflow_dispatch:
 
 env:

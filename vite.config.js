@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/', // ensure assets load correctly when served from site root (e.g. nginx /var/www/thakii-frontend)
   plugins: [react()],
   server: {
     port: 3000,
