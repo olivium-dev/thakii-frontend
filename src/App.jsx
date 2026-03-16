@@ -236,6 +236,27 @@ function AppContent() {
   };
   
 
+  // Detect return from payment website and refresh credits balance
+  useEffect(() => {
+    if (currentUser) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isReturningFromPayment =
+        urlParams.get('payment_success') === 'true' || urlParams.has('payment_id');
+      if (isReturningFromPayment) {
+        const status = urlParams.get('status');
+        window.history.replaceState({}, '', window.location.pathname);
+
+        if (status === 'failed' || status === 'cancelled' || status === 'refunded') {
+          toast.error('Payment was not successful. Please try again.');
+        } else {
+          fetchCredits().then(() => {
+            toast.success('Credits added to your account!');
+          });
+        }
+      }
+    }
+  }, [currentUser]);
+
   // Initial data fetch and real-time updates setup - DISABLED for manual refresh only
   useEffect(() => {
     if (currentUser) {
@@ -380,7 +401,6 @@ function AppContent() {
         isOpen={showCreditPackages}
         onClose={() => setShowCreditPackages(false)}
         credits={credits}
-        onPurchaseComplete={(newBalance) => setCredits(newBalance)}
       />
 
       {/* Toast Notifications */}

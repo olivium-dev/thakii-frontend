@@ -159,6 +159,11 @@ export const mockApiService = {
     };
   },
 
+  async createCheckoutSession(packageId) {
+    await delay(getDelay());
+    return { session: `mock-session-token-${packageId}-${Date.now()}` };
+  },
+
   async getAllVideosAdmin() {
     await delay(getDelay());
     return videos.map((v) => ({

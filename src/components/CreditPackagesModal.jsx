@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Coins, Zap, Crown, Check, Loader, Star } from 'lucide-react';
+import { X, Coins, Zap, Crown, Loader, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { apiService } from '../services/apiAdapter';
+import { useAuth } from '../contexts/authAdapter';
+
+const PAYMENT_URL = import.meta.env.VITE_PAYMENT_URL || '';
 
 const PACKAGE_ICONS = {
   starter: Zap,
@@ -33,18 +36,16 @@ const PACKAGE_COLORS = {
   },
 };
 
-const CreditPackagesModal = ({ isOpen, onClose, credits, onPurchaseComplete }) => {
+const CreditPackagesModal = ({ isOpen, onClose, credits }) => {
+  const { currentUser } = useAuth();
   const [packages, setPackages] = useState([]);
   const [isLoadingPackages, setIsLoadingPackages] = useState(true);
-  const [purchasingId, setPurchasingId] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
-  const [successData, setSuccessData] = useState(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setConfirmingId(null);
-      setPurchasingId(null);
-      setSuccessData(null);
       loadPackages();
     }
   }, [isOpen]);
@@ -66,28 +67,29 @@ const CreditPackagesModal = ({ isOpen, onClose, credits, onPurchaseComplete }) =
   };
 
   const handleConfirmPurchase = async (pkg) => {
-    setPurchasingId(pkg.id);
-    setConfirmingId(null);
+    if (!currentUser) {
+      toast.error('You must be logged in to purchase credits.');
+      return;
+    }
+    if (!PAYMENT_URL) {
+      toast.error('Payment service is not configured.');
+      return;
+    }
+    setIsRedirecting(true);
     try {
-      const result = await apiService.purchaseCreditPackage(pkg.id);
-      setSuccessData({
-        credits_added: result.credits_added,
-        new_balance: result.new_balance,
-      });
-      if (onPurchaseComplete) {
-        onPurchaseComplete(result.new_balance);
-      }
-    } catch {
-      toast.error('Purchase failed. Please try again.');
-    } finally {
-      setPurchasingId(null);
+      const callbackUrl = `${window.location.origin}/?payment_success=true`;
+      const data = await apiService.createCheckoutSession(pkg.id, callbackUrl);
+      window.location.href = `${PAYMENT_URL}/pay?code=${encodeURIComponent(data.code)}`;
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || 'Unknown error';
+      console.error('Checkout session error:', err);
+      toast.error(`Checkout failed: ${msg}`);
+      setIsRedirecting(false);
     }
   };
 
   const handleClose = () => {
     setConfirmingId(null);
-    setPurchasingId(null);
-    setSuccessData(null);
     onClose();
   };
 
@@ -127,26 +129,7 @@ const CreditPackagesModal = ({ isOpen, onClose, credits, onPurchaseComplete }) =
 
         {/* Content */}
         <div className="p-5 sm:p-6 overflow-y-auto max-h-[calc(90vh-160px)]">
-          {successData ? (
-            <div className="text-center py-8 sm:py-12">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-slide-up">
-                <Check className="w-8 h-8 text-green-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Credits Added!</h3>
-              <p className="text-gray-600 mb-1">
-                <span className="font-semibold text-green-600">+{successData.credits_added} credits</span> have been added to your account.
-              </p>
-              <p className="text-sm text-gray-500 mb-6">
-                New balance: <span className="font-medium text-amber-600">{successData.new_balance} credits</span>
-              </p>
-              <button
-                onClick={handleClose}
-                className="btn-primary px-8"
-              >
-                Done
-              </button>
-            </div>
-          ) : isLoadingPackages ? (
+          {isLoadingPackages ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader className="w-8 h-8 text-blue-500 animate-spin mb-3" />
               <p className="text-gray-500">Loading packages...</p>
@@ -162,8 +145,6 @@ const CreditPackagesModal = ({ isOpen, onClose, credits, onPurchaseComplete }) =
                   const colors = PACKAGE_COLORS[pkg.id] || PACKAGE_COLORS.starter;
                   const Icon = PACKAGE_ICONS[pkg.id] || Coins;
                   const isConfirming = confirmingId === pkg.id;
-                  const isPurchasing = purchasingId === pkg.id;
-                  const isDisabled = purchasingId !== null;
 
                   return (
                     <div
@@ -195,17 +176,24 @@ const CreditPackagesModal = ({ isOpen, onClose, credits, onPurchaseComplete }) =
                         </div>
 
                         <div className="mb-5">
-                          <span className="text-2xl font-bold text-gray-900">${pkg.price.toFixed(2)}</span>
+                          <span className="text-2xl font-bold text-gray-900">
+                            {pkg.currency === 'KWD' ? 'KD ' : pkg.currency === 'USD' ? '$' : ''}{pkg.price.toFixed(2)}
+                          </span>
                         </div>
 
-                        {isConfirming ? (
+                        {isRedirecting ? (
+                          <div className="flex items-center justify-center min-h-[44px] space-x-2">
+                            <Loader className="w-5 h-5 text-blue-500 animate-spin" />
+                            <span className="text-sm text-gray-600">Redirecting...</span>
+                          </div>
+                        ) : isConfirming ? (
                           <div className="space-y-2">
                             <p className="text-sm text-gray-600 mb-2">Confirm purchase?</p>
                             <button
                               onClick={() => handleConfirmPurchase(pkg)}
                               className={`w-full min-h-[44px] text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 ${colors.button}`}
                             >
-                              Confirm - ${pkg.price.toFixed(2)}
+                              Confirm - {pkg.currency === 'KWD' ? 'KD ' : pkg.currency === 'USD' ? '$' : ''}{pkg.price.toFixed(2)}
                             </button>
                             <button
                               onClick={() => setConfirmingId(null)}
@@ -214,20 +202,10 @@ const CreditPackagesModal = ({ isOpen, onClose, credits, onPurchaseComplete }) =
                               Cancel
                             </button>
                           </div>
-                        ) : isPurchasing ? (
-                          <div className="flex items-center justify-center min-h-[44px] space-x-2">
-                            <Loader className="w-5 h-5 text-blue-500 animate-spin" />
-                            <span className="text-sm text-gray-600">Processing...</span>
-                          </div>
                         ) : (
                           <button
                             onClick={() => handleBuyClick(pkg.id)}
-                            disabled={isDisabled}
-                            className={`w-full min-h-[44px] text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 ${
-                              isDisabled
-                                ? 'bg-gray-300 cursor-not-allowed'
-                                : colors.button
-                            }`}
+                            className={`w-full min-h-[44px] text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 ${colors.button}`}
                           >
                             Buy Now
                           </button>
