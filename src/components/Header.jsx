@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FileText, Activity, LogOut, User, Shield, Menu, X, Coins } from 'lucide-react';
-import { useAuth } from '../contexts/authAdapter';
+import { useAuth } from '../contexts/AuthContext';
 
 const Header = ({ healthStatus, activeTab, setActiveTab, isAdmin, credits, onBuyCredits }) => {
   const { currentUser, logout } = useAuth();

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Coins, Zap, Crown, Loader, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { apiService } from '../services/apiAdapter';
-import { useAuth } from '../contexts/authAdapter';
+import { apiService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const PAYMENT_URL = import.meta.env.VITE_PAYMENT_URL || '';
 

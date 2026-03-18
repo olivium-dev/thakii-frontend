@@ -13,6 +13,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body>
+    <!-- Ensure fetch API is on globalThis before any bundle runs (avoids "Cannot destructure Request of undefined") -->
+    <script>
+      (function() {
+        var g = typeof globalThis !== 'undefined' ? globalThis : window;
+        if (g && typeof window !== 'undefined') {
+          if (!g.Request && window.Request) g.Request = window.Request;
+          if (!g.Response && window.Response) g.Response = window.Response;
+          if (!g.Headers && window.Headers) g.Headers = window.Headers;
+          if (!g.fetch && window.fetch) g.fetch = window.fetch;
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

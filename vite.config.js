@@ -25,7 +25,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    // Required for top-level await in authAdapter, apiAdapter, websocketAdapter
     target: 'es2022',
   },
   preview: {

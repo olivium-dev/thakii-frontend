@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
 
-import { AuthProvider, useAuth } from './contexts/authAdapter';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
 import FileUpload from './components/FileUpload';
 import VideoList from './components/VideoList';
@@ -10,8 +10,8 @@ import CreditPackagesModal from './components/CreditPackagesModal';
 import FirebaseLogin from './components/Auth/FirebaseLogin';
 import AdminDashboard from './components/AdminDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
-import { apiService } from './services/apiAdapter';
-import { websocketService } from './services/websocketAdapter';
+import { apiService } from './services/api';
+import { websocketService } from './services/websocket';
 
 function AppContent() {
   const { currentUser, isAdmin } = useAuth();

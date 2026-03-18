@@ -117,24 +117,24 @@ The web interface connects directly to the backend service (not Lambda) at:
 
 ## File Structure
 
+See **[STRUCTURE.md](./STRUCTURE.md)** for the full layout and conventions. Summary:
+
 ```
-web-interface/
+thakii-frontend/
 ├── src/
-│   ├── components/         # React components
-│   │   ├── Header.jsx     # App header with branding
-│   │   ├── FileUpload.jsx # File upload component
-│   │   ├── VideoList.jsx  # Video list and management
-│   │   └── ServiceStatus.jsx # Service health status
-│   ├── services/          # API services
-│   │   └── api.js         # Backend API communication
-│   ├── App.jsx            # Main application component
-│   ├── main.jsx           # Application entry point
-│   └── index.css          # Global styles and Tailwind
-├── public/                # Static assets
-├── package.json           # Dependencies and scripts
-├── tailwind.config.js     # Tailwind CSS configuration
-├── vite.config.js         # Vite configuration
-└── README.md              # This file
+│   ├── main.jsx           # Entry point
+│   ├── App.jsx            # Root component
+│   ├── index.css           # Global styles (Tailwind)
+│   ├── config/             # Firebase and app config
+│   ├── contexts/           # Auth context + authAdapter (mock/real)
+│   ├── services/           # API, websocket + adapters
+│   ├── mocks/              # Mock auth, API, WebSocket + fixtures
+│   └── components/        # UI (Header, FileUpload, VideoList, Auth/, …)
+├── e2e/                    # Playwright E2E tests
+├── scripts/                # Server check / deployment helpers
+├── vite.config.js
+├── tailwind.config.js
+└── STRUCTURE.md            # Layout and naming conventions
 ```
 
 ## API Integration
