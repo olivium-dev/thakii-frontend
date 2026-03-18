@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feature/websocket-updates
+      - feature/Finalize-payment-flow
   workflow_dispatch:
 
 env:
@@ -33,7 +34,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
     
     - name: Install dependencies
@@ -42,6 +43,7 @@ jobs:
     - name: Build frontend
       env:
         VITE_API_BASE_URL: https://thakii-02.fanusdigital.site/thakii-be
+        VITE_PAYMENT_URL: https://thakii-02.fanusdigital.site/payment
         VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
         VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
         VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}

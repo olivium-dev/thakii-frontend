@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
 
-import { AuthProvider, useAuth } from './contexts/authAdapter';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
 import FileUpload from './components/FileUpload';
 import VideoList from './components/VideoList';
@@ -10,8 +10,8 @@ import CreditPackagesModal from './components/CreditPackagesModal';
 import FirebaseLogin from './components/Auth/FirebaseLogin';
 import AdminDashboard from './components/AdminDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
-import { apiService } from './services/apiAdapter';
-import { websocketService } from './services/websocketAdapter';
+import { apiService } from './services/api';
+import { websocketService } from './services/websocket';
 
 function AppContent() {
   const { currentUser, isAdmin } = useAuth();
@@ -51,77 +51,34 @@ function AppContent() {
 
   // Fetch video list
   const fetchVideos = async () => {
-    console.log('🎬 === FETCH VIDEOS STARTED ===');
     setIsLoadingVideos(true);
-    
     try {
-      console.log('📡 Calling apiService.getVideoList()...');
       const response = await apiService.getVideoList();
-      
-      console.log('📊 RAW BACKEND RESPONSE:');
-      console.log('   Type:', typeof response);
-      console.log('   Is Array:', Array.isArray(response));
-      console.log('   Response:', response);
-      
-      // Handle different response formats
       let videoArray = [];
       let hasError = false;
-      
+
       if (Array.isArray(response)) {
-        console.log('✅ Response is array format (legacy)');
         videoArray = response;
       } else if (response && typeof response === 'object') {
-        console.log('✅ Response is object format (correct)');
-        console.log('   Keys:', Object.keys(response));
-        
-        // Check for error first
         if (response.error) {
-          console.error('❌ Backend returned error:', response.error);
+          console.error('Backend returned error:', response.error);
           hasError = true;
           videoArray = [];
         } else if (response.videos && Array.isArray(response.videos)) {
           videoArray = response.videos;
-          console.log(`✅ Found videos array: ${response.videos.length} videos`);
-          console.log(`✅ Total count: ${response.total || 0}`);
-          
-          // Log first few videos for debugging
-          if (response.videos.length > 0) {
-            console.log('📋 First video:', response.videos[0]);
-          }
         } else {
-          console.log('⚠️  No videos array in response, using empty array');
           videoArray = [];
         }
-        
-        if (response.error_message) {
-          console.log('⚠️  Backend warning:', response.error_message);
-          if (response.error_message.includes('index')) {
-            console.log('🔥 Firebase index issue detected');
-          }
-        }
       } else {
-        console.log('❌ Unexpected response format:', response);
         videoArray = [];
       }
-      
-      console.log(`🎯 FINAL RESULT: Setting ${videoArray.length} videos`);
+
       setVideos(videoArray);
-      
-      // Show success message
-      if (!hasError) {
-        console.log(`✅ Video list updated successfully: ${videoArray.length} videos`);
-      }
-      
     } catch (error) {
-      console.error('❌ FETCH VIDEOS ERROR:', error);
-      console.error('   Error type:', typeof error);
-      console.error('   Error message:', error.message);
-      console.error('   Error response:', error.response?.data);
-      
+      console.error('Failed to load videos:', error);
       toast.error('Failed to load videos');
       setVideos([]);
     } finally {
-      console.log('🏁 FETCH VIDEOS COMPLETED - Setting loading to false');
       setIsLoadingVideos(false);
     }
   };
@@ -137,10 +94,8 @@ function AppContent() {
       });
 
       toast.success('Video uploaded successfully!');
-      console.log('Upload result:', result);
 
-      // CRITICAL FIX: Immediately add the video to local state with the backend-returned video_id
-      // This prevents UUID mismatch issues where frontend would show wrong video_id
+      // Immediately add the video to local state with the backend-returned video_id
       if (result && result.video_id) {
         const newVideo = {
           video_id: result.video_id,
@@ -149,8 +104,6 @@ function AppContent() {
           upload_date: new Date().toISOString(),
           created_at: new Date().toISOString()
         };
-        
-        console.log('✅ Adding uploaded video to local state:', newVideo);
         setVideos(prevVideos => [newVideo, ...prevVideos]);
       }
 
@@ -181,47 +134,19 @@ function AppContent() {
     }
   };
 
-  // Start auto-refresh system (simplified - no modal)
   const startAutoRefresh = () => {
-    console.log('🔄 === STARTING AUTO-REFRESH SYSTEM ===');
-    console.log('   Current auto-refresh state:', autoRefreshActive);
-    
-    // Stop any existing intervals first
     stopAutoRefresh();
-    
-    console.log('✅ Setting auto-refresh active to true...');
     setAutoRefreshActive(true);
-    
-    // Set up 30-second interval for continuous refresh
-    console.log('⏰ Setting up 30-second interval...');
-    const interval = setInterval(() => {
-      console.log('🔄 === AUTO-REFRESH TRIGGERED ===');
-      console.log('   Time:', new Date().toLocaleTimeString());
-      
-      fetchVideos();
-    }, 30000); // 30 seconds
+    const interval = setInterval(() => fetchVideos(), 30000);
     setRefreshInterval(interval);
-    console.log('✅ Interval set with ID:', interval);
-    
-    console.log('🎉 Auto-refresh system initialized (no modal timeout)');
   };
-  
-  // Stop auto-refresh system
+
   const stopAutoRefresh = () => {
-    console.log('⏹️ === STOPPING AUTO-REFRESH SYSTEM ===');
-    console.log('   Current interval ID:', refreshInterval);
-    
     setAutoRefreshActive(false);
-    console.log('✅ Auto-refresh active set to false');
-    
     if (refreshInterval) {
-      console.log('🛑 Clearing interval:', refreshInterval);
       clearInterval(refreshInterval);
       setRefreshInterval(null);
-      console.log('✅ Interval cleared and nullified');
     }
-    
-    console.log('🎯 Auto-refresh system completely stopped');
   };
   
   // Handle manual refresh
@@ -236,49 +161,44 @@ function AppContent() {
   };
   
 
-  // Initial data fetch and real-time updates setup - DISABLED for manual refresh only
+  // Detect return from payment website and refresh credits balance
   useEffect(() => {
     if (currentUser) {
-      console.log('👤 User authenticated, starting initial data fetch...');
+      const urlParams = new URLSearchParams(window.location.search);
+      const isReturningFromPayment =
+        urlParams.get('payment_success') === 'true' || urlParams.has('payment_id');
+      if (isReturningFromPayment) {
+        const status = urlParams.get('status');
+        window.history.replaceState({}, '', window.location.pathname);
+
+        if (status === 'failed' || status === 'cancelled' || status === 'refunded') {
+          toast.error('Payment was not successful. Please try again.');
+        } else {
+          fetchCredits().then(() => {
+            toast.success('Credits added to your account!');
+          });
+        }
+      }
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser) {
       fetchHealthStatus();
       fetchVideos();
       fetchCredits();
-      
-      // Start auto-refresh after initial load
-      console.log('🚀 Triggering auto-refresh after initial load...');
-      setTimeout(() => {
-        console.log('⏰ 2-second delay completed, starting auto-refresh...');
-        startAutoRefresh();
-      }, 2000); // Wait 2 seconds after initial load
-      
-      // Connect to WebSocket for real-time updates
-      console.log('🔌 Connecting to WebSocket for real-time updates...');
+      setTimeout(() => startAutoRefresh(), 2000);
+
       websocketService.connect(currentUser.uid, (taskData) => {
-        console.log('📨 WebSocket task update received:', taskData);
-        
-        // CRITICAL FIX: Use video_id as the ONLY identifier (no fallback to 'id')
-        // This prevents mismatched IDs from creating duplicate entries
         if (!taskData.video_id) {
-          console.warn('⚠️  WebSocket update missing video_id, ignoring:', taskData);
+          console.warn('WebSocket update missing video_id, ignoring:', taskData);
           return;
         }
-        
-        // Update videos state with new task data
         setVideos(prevVideos => {
           const index = prevVideos.findIndex(v => v.video_id === taskData.video_id);
-          
           if (index !== -1) {
-            // Update existing video - merge task data with existing data
             const updated = [...prevVideos];
-            updated[index] = { 
-              ...updated[index], 
-              ...taskData,
-              // Ensure video_id stays consistent
-              video_id: updated[index].video_id 
-            };
-            console.log(`✅ Updated video ${taskData.video_id} to status: ${taskData.status}`);
-            
-            // Show toast notification for status changes (only once per status)
+            updated[index] = { ...updated[index], ...taskData, video_id: updated[index].video_id };
             const oldStatus = prevVideos[index].status;
             if (oldStatus !== taskData.status) {
               if (taskData.status === 'completed' || taskData.status === 'done') {
@@ -289,19 +209,13 @@ function AppContent() {
                 toast(`Processing video "${taskData.filename || 'unknown'}"...`, { icon: 'ℹ️' });
               }
             }
-            
             return updated;
-          } else {
-            // New video not in local state yet - add it
-            console.log(`➕ Adding new video ${taskData.video_id} from WebSocket`);
-            return [taskData, ...prevVideos];
           }
+          return [taskData, ...prevVideos];
         });
       });
-      
-      // Clean up WebSocket and auto-refresh when component unmounts or user changes
+
       return () => {
-        console.log('🧹 Cleaning up WebSocket and auto-refresh on unmount');
         websocketService.disconnect();
         stopAutoRefresh();
       };
@@ -380,7 +294,6 @@ function AppContent() {
         isOpen={showCreditPackages}
         onClose={() => setShowCreditPackages(false)}
         credits={credits}
-        onPurchaseComplete={(newBalance) => setCredits(newBalance)}
       />
 
       {/* Toast Notifications */}

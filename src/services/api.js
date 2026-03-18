@@ -2,7 +2,7 @@ import axios from 'axios';
 import { auth } from '../config/firebase';
 
 // Configure the base URL via env; fallback to local backend for development
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://thakii-02.fanusdigital.site/thakii-be';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -590,6 +590,14 @@ export const apiService = {
 
   async purchaseCreditPackage(packageId) {
     const response = await api.post(`/api/wallet/packages/${packageId}/purchase`);
+    return response.data;
+  },
+
+  async createCheckoutSession(packageId, callbackUrl) {
+    const response = await api.post('/api/wallet/checkout-session', {
+      package_id: packageId,
+      callback_url: callbackUrl,
+    });
     return response.data;
   },
 
