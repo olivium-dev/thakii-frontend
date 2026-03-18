@@ -1,0 +1,30 @@
+diff --git a/node_modules/axios/lib/utils.js b/node_modules/axios/lib/utils.js
+index 73c4f0d..d86fb20 100644
+--- a/node_modules/axios/lib/utils.js
++++ b/node_modules/axios/lib/utils.js
+@@ -375,11 +375,20 @@ function findKey(obj, key) {
+   return null;
+ }
+ 
+-const _global = (() => {
+-  /*eslint no-undef:0*/
+-  if (typeof globalThis !== 'undefined') return globalThis;
+-  return typeof self !== 'undefined' ? self : typeof window !== 'undefined' ? window : global;
+-})();
++let _global;
++try {
++  _global = (() => {
++    if (typeof globalThis !== 'undefined') return globalThis;
++    if (typeof self !== 'undefined') return self;
++    if (typeof window !== 'undefined') return window;
++    return typeof global !== 'undefined' ? global : undefined;
++  })();
++} catch (e) {
++  _global = undefined;
++}
++if (_global === undefined) {
++  _global = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : self;
++}
+ 
+ const isContextDefined = (context) => !isUndefined(context) && context !== _global;
+ 

@@ -30,7 +30,7 @@ export default defineConfig({
     host: true,
   },
   define: {
-    global: 'globalThis',
+    'window.global': 'window',
   },
   optimizeDeps: {
     include: ['firebase/app', 'firebase/auth', 'firebase/firestore']
