@@ -72,8 +72,8 @@ thakii-frontend/
 | Kind | Location | Example |
 |------|----------|---------|
 | React components | `src/components/` | Header, FileUpload, VideoList |
-| Auth / global state | `src/contexts/` | AuthContext, authAdapter |
-| API / WebSocket clients | `src/services/` | api.js, apiAdapter.js, websocket.js |
+| Auth / global state | `src/contexts/` | AuthContext |
+| API / WebSocket clients | `src/services/` | api.js, websocket.js |
 | App config (env, SDKs) | `src/config/` | firebase.js |
 | Mock implementations | `src/mocks/` | MockAuthProvider, mockApiService, data/*.json |
 | Global styles | `src/index.css` | Tailwind + app-wide CSS |
@@ -87,12 +87,6 @@ thakii-frontend/
 - Unused CSS files (e.g. default Vite `App.css` if the app uses only `index.css`).
 - Multiple copies of the same component (e.g. only one `ErrorBoundary` in `components/`).
 
-## Adapter pattern
+## Mocks
 
-The app supports **mock mode** for E2E and local dev without a backend. Adapters choose the implementation at runtime using `VITE_MOCK_MODE`:
-
-- `contexts/authAdapter.jsx` → `AuthContext` (real) or `MockAuthProvider` (mock).
-- `services/apiAdapter.js` → `api` (real) or `mockApiService` (mock).
-- `services/websocketAdapter.js` → `websocket` (real) or `mockWebSocketService` (mock).
-
-Adapters use **static imports only** (no top-level `await`) to avoid bundler TDZ issues in production.
+The `src/mocks/` folder contains mock auth, API, and WebSocket implementations and fixtures. These are not wired into the app (no adapter layer). They remain for reference or for future E2E/mock-mode support.

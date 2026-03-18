@@ -1,6 +1,19 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Must run first: ensure fetch API is available on all globals (fixes "Cannot destructure Request of undefined" in Firebase/deps) -->
+    <script>
+      (function() {
+        if (typeof window === 'undefined') return;
+        var w = window;
+        var g = typeof globalThis !== 'undefined' ? globalThis : w;
+        var s = typeof self !== 'undefined' ? self : w;
+        if (w.Request) { g.Request = w.Request; s.Request = w.Request; }
+        if (w.Response) { g.Response = w.Response; s.Response = w.Response; }
+        if (w.Headers) { g.Headers = w.Headers; s.Headers = w.Headers; }
+        if (w.fetch) { g.fetch = w.fetch; s.fetch = w.fetch; }
+      })();
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,18 +26,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body>
-    <!-- Ensure fetch API is on globalThis before any bundle runs (avoids "Cannot destructure Request of undefined") -->
-    <script>
-      (function() {
-        var g = typeof globalThis !== 'undefined' ? globalThis : window;
-        if (g && typeof window !== 'undefined') {
-          if (!g.Request && window.Request) g.Request = window.Request;
-          if (!g.Response && window.Response) g.Response = window.Response;
-          if (!g.Headers && window.Headers) g.Headers = window.Headers;
-          if (!g.fetch && window.fetch) g.fetch = window.fetch;
-        }
-      })();
-    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
