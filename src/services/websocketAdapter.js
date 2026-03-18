@@ -5,8 +5,13 @@
 
 import { isMockMode } from '../mocks/mockConfig';
 
-const websocketService = isMockMode()
-  ? (await import('../mocks/mockWebSocketService')).default
-  : (await import('./websocket')).websocketService;
+let websocketService;
+if (isMockMode()) {
+  const mod = await import('../mocks/mockWebSocketService');
+  websocketService = mod.default;
+} else {
+  const mod = await import('./websocket');
+  websocketService = mod.websocketService;
+}
 
 export { websocketService };

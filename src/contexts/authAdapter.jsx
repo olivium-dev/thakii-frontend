@@ -5,9 +5,12 @@
 
 import { isMockMode } from '../mocks/mockConfig';
 
-const authModule = isMockMode()
-  ? await import('../mocks/MockAuthProvider')
-  : await import('./AuthContext');
+let authModule;
+if (isMockMode()) {
+  authModule = await import('../mocks/MockAuthProvider');
+} else {
+  authModule = await import('./AuthContext');
+}
 
 export const AuthProvider = isMockMode() ? authModule.MockAuthProvider : authModule.AuthProvider;
 export const useAuth = isMockMode() ? authModule.useMockAuth : authModule.useAuth;

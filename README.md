@@ -57,6 +57,39 @@ npm run build
 
 The build files will be generated in the `dist` directory.
 
+### Server diagnostics (white page / 404s)
+
+To check nginx and server logs on the deployment host:
+
+**From your machine (SSH and run in one go):**
+```bash
+# Use the same host as in .github/workflows/deploy.yml (e.g. Cloudflare SSH alias or direct)
+ssh ec2-user@thakii-02.fds-1.com 'bash -s' < scripts/check-server.sh
+```
+
+**On the server (after SSH):**
+```bash
+cd /path/to/thakii-frontend
+bash scripts/check-server.sh
+```
+
+The script prints: contents of `WEB_ROOT` and `assets/`, nginx config for the site, last 50 nginx error log lines, and recent 404s from the access log. Fix any missing `assets/`, wrong `root`, or missing `try_files $uri $uri/ /index.html;` for the frontend.
+
+**Quick manual checks on the server:**
+```bash
+# Nginx config and test
+sudo nginx -t
+sudo grep -R "thakii\|fanusdigital" /etc/nginx/
+
+# Recent errors and 404s
+sudo tail -100 /var/log/nginx/error.log
+sudo grep " 404 " /var/log/nginx/access.log | tail -20
+
+# Frontend files
+ls -la /var/www/thakii-frontend/
+ls /var/www/thakii-frontend/assets/ | head -20
+```
+
 ### Preview Production Build
 
 To preview the production build locally:

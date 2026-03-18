@@ -5,8 +5,13 @@
 
 import { isMockMode } from '../mocks/mockConfig';
 
-const apiService = isMockMode()
-  ? (await import('../mocks/mockApiService')).mockApiService
-  : (await import('./api')).apiService;
+let apiService;
+if (isMockMode()) {
+  const mod = await import('../mocks/mockApiService');
+  apiService = mod.mockApiService;
+} else {
+  const mod = await import('./api');
+  apiService = mod.apiService;
+}
 
 export { apiService };
