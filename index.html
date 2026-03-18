@@ -1,19 +1,6 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <!-- Must run first: ensure fetch API is available on all globals (fixes "Cannot destructure Request of undefined" in Firebase/deps) -->
-    <script>
-      (function() {
-        if (typeof window === 'undefined') return;
-        var w = window;
-        var g = typeof globalThis !== 'undefined' ? globalThis : w;
-        var s = typeof self !== 'undefined' ? self : w;
-        if (w.Request) { g.Request = w.Request; s.Request = w.Request; }
-        if (w.Response) { g.Response = w.Response; s.Response = w.Response; }
-        if (w.Headers) { g.Headers = w.Headers; s.Headers = w.Headers; }
-        if (w.fetch) { g.fetch = w.fetch; s.fetch = w.fetch; }
-      })();
-    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
